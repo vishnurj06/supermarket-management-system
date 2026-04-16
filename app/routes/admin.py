@@ -3,15 +3,11 @@ from app.models import Product, Order, User
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-# Note: Because we added url_prefix='/admin' above, 
-# @admin_bp.route('/') automatically becomes '/admin/' in your browser.
-
-
-#admin dashboard route
+# admin dashboard route
 @admin_bp.route('/')
-def admin():
+def admin_dashboard(): # <-- Renamed to match the redirect in auth.py
     if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login')) # <-- Updated namespace
     
     products = Product.get_all()
     orders = Order.get_recent(20)
@@ -19,14 +15,12 @@ def admin():
     low_stock_items = [p for p in products if p['stock'] < 10]
         
     return render_template('admin.html', products=products, orders=orders, low_stock_items=low_stock_items, total_products=len(products))
-    pass
 
-
-#admin add product route
+# admin add product route
 @admin_bp.route('/add_product', methods=['POST'])
 def add_product():
     if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login')) # <-- Updated namespace
     
     try:
         Product.create(
@@ -42,15 +36,13 @@ def add_product():
     except Exception as e:
         flash(f'Error adding product: {str(e)}', 'error')
         
-    return redirect(url_for('admin_dashboard'))
-    pass
+    return redirect(url_for('admin.admin_dashboard')) # <-- Updated namespace
 
-
-#admin edit product route
-@admin_bp.route('/admin/product/edit/<int:product_id>', methods=['POST'])
+# admin edit product route
+@admin_bp.route('/product/edit/<int:product_id>', methods=['POST']) # <-- Removed the extra /admin
 def edit_product(product_id):
     if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
         
     try:
         Product.update(
@@ -65,15 +57,13 @@ def edit_product(product_id):
     except Exception as e:
         flash(f'Error updating product: {str(e)}', 'error')
         
-    return redirect(url_for('admin_dashboard'))
-    pass
+    return redirect(url_for('admin.admin_dashboard'))
 
-
-#admin delete product route
-@admin_bp.route('/admin/product/delete/<int:product_id>', methods=['POST'])
+# admin delete product route
+@admin_bp.route('/product/delete/<int:product_id>', methods=['POST']) # <-- Removed the extra /admin
 def delete_product(product_id):
     if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
         
     try:
         Product.delete(product_id)
@@ -81,5 +71,4 @@ def delete_product(product_id):
     except Exception as e:
         flash(f'Error deleting product: {str(e)}', 'error')
         
-    return redirect(url_for('admin_dashboard'))
-    pass
+    return redirect(url_for('admin.admin_dashboard'))

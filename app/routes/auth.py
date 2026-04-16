@@ -1,11 +1,10 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
+from werkzeug.security import check_password_hash  # <-- Added this import!
 from app.models import User
-
 
 auth_bp = Blueprint('auth', __name__)
 
-
-#login route
+# login route
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -20,25 +19,22 @@ def login():
             session['username'] = user['username']
             
             if user['role'] == 'admin':
-                return redirect(url_for('admin_dashboard'))
+                return redirect(url_for('admin.admin_dashboard')) # <-- Updated namespace
             elif user['role'] == 'staff':
-                return redirect(url_for('staff_panel'))
+                return redirect(url_for('staff.staff_panel')) # (We will set this up later)
             else:
-                return redirect(url_for('customer_view'))
+                return redirect(url_for('customer.customer_view')) # <-- Updated namespace
         return render_template('login.html', error="Invalid credentials")
             
     return render_template('login.html')
-    pass
 
-
-#logout route
+# logout route
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
-    pass
+    return redirect(url_for('auth.login')) # <-- Updated namespace
 
-#guest start route
+# guest start route
 @auth_bp.route('/guest_start')
 def guest_start():
     import uuid
@@ -46,5 +42,4 @@ def guest_start():
     session['guest_id'] = str(uuid.uuid4())[:8]
     session['role'] = 'customer'
     session['username'] = 'Guest Shopper'
-    return redirect(url_for('customer_view'))
-    pass
+    return redirect(url_for('customer.customer_view')) # <-- Updated namespace
