@@ -26,11 +26,15 @@ def create_app(role_filter=None):
     elif role_filter == 'admin':
         app.register_blueprint(admin_bp)
         app.register_blueprint(staff_bp) 
-        active_blueprints.extend(['admin', 'staff'])
+        # --- FIX: API added to Admin port for live dashboard stats ---
+        app.register_blueprint(api_bp) 
+        active_blueprints.extend(['admin', 'staff', 'api'])
     
     elif role_filter == 'staff':
         app.register_blueprint(staff_bp)
-        active_blueprints.append('staff')
+        # --- FIX: API added to Staff port for exit validations ---
+        app.register_blueprint(api_bp) 
+        active_blueprints.extend(['staff', 'api'])
     
     else:
         # Fallback for old run.py
