@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartMart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg-light);
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 3.5rem 3rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+
+        .login-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-box h1 {
+            font-size: 1.75rem;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .start-shopping-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: var(--secondary);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .start-shopping-btn:hover {
+            background: var(--secondary-hover);
+            transform: translateY(-1px);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: .5em;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: .5em;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .error-msg {
+            background: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.85rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-box scale-in">
+            <div class="login-logo">
+                <h1>SmartMart</h1>
+            </div>
+            <div class="subtitle">Smart Queue-less Supermarket Billing System</div>
+
+            <a href="/guest_start" class="start-shopping-btn">
+                🛒 Start Shopping as Guest
+            </a>
+
+            <div class="divider">Employee Portal</div>
+
+            {% if error %}
+            <div class="error-msg">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label>Employee ID / Username</label>
+                    <input type="text" name="username" required placeholder="admin or staff">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn-primary login-btn">System Login</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartMart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .cart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .cart-stat {
+            background: var(--bg-light);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .cart-stat .label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-stat .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: var(--font-mono);
+        }
+
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 2;
+            stroke: #4bb71b;
+            stroke-miterlimit: 10;
+            box-shadow: inset 0px 0px 0px #4bb71b;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+        }
+
+        .success-checkmark .checkmark_circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #4bb71b;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+
+        .success-checkmark .checkmark_check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+
+        @keyframes stroke {
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes scale {
+
+            0%,
+            100% {
+                transform: none;
+            }
+
+            50% {
+                transform: scale3d(1.1, 1.1, 1);
+            }
+        }
+
+        @keyframes fill {
+            100% {
+                box-shadow: inset 0px 0px 0px 30px #4bb71b;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header" style="justify-content: space-between; gap: 2rem; flex-wrap: wrap;">
+            <div class="logo">
+                <h1>SmartMart</h1>
+            </div>
+
+            <div style="display:flex; align-items:center; gap: 1rem; margin-left: auto;">
+                <div class="budget-display" id="global-budget-display" style="display:none; cursor:pointer;">
+                    <span class="label">Budget Remaining</span>
+                    <span id="budget-amount" class="amount mono">₹0.00</span>
+                </div>
+                <button id="set-budget-btn" class="btn-primary">
+                    <span>Set Budget</span>
+                </button>
+
+                <div style="width:1px; height: 30px; background: var(--border); margin: 0 1rem;"></div>
+
+                <span style="color:var(--text-muted); font-size:0.9rem; font-weight: 500;">Hi, {{ username }}</span>
+                <a href="/logout" class="btn-secondary"
+                    style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration:none;">Logout</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <section class="catalog-section">
+                <div class="section-header" style="margin-bottom: 0.5rem;">
+                    <h2>Supermarket Aisles</h2>
+                    <p class="subtitle">Click on products to add them to your smart cart seamlessly.</p>
+                </div>
+
+                <div class="filter-bar">
+                    <input type="text" id="search-input" class="search-input"
+                        placeholder="Search for groceries, household...">
+                </div>
+
+                <div class="category-tabs" id="category-tabs">
+                    <button class="category-tab active" data-category="all">All Items</button>
+                    <!-- Populated by JS -->
+                </div>
+
+                <div id="product-grid" class="product-grid" style="margin-top: 1rem;">
+                    <div style="text-align:center; padding: 2rem; color: var(--text-muted); width:100%;">Loading
+                        products...</div>
+                </div>
+            </section>
+
+            <section class="cart-section">
+                <div class="cart-header">
+                    <h2 style="font-size: 1.4rem;">Your Cart</h2>
+                    <span id="cart-item-count" class="badge">0</span>
+                </div>
+
+                <div class="cart-grid">
+                    <div class="cart-stat">
+                        <span class="label">Total Items</span>
+                        <span id="stat-total-items" class="value">0</span>
+                    </div>
+                    <div class="cart-stat">
+                        <span class="label">Expected Weight</span>
+                        <span id="cart-weight" class="value">0g</span>
+                    </div>
+                </div>
+
+                <div id="cart-items" class="cart-items">
+                    <div id="empty-state" class="empty-state">
+                        <div style="font-size: 3rem; opacity: 0.2; margin-bottom: 0.5rem;">🛒</div>
+                        <p>Your cart is empty.<br>Start adding items from the aisles!</p>
+                    </div>
+                </div>
+
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal" class="mono">₹0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax (8%)</span>
+                        <span id="cart-tax" class="mono">₹0.00</span>
+                    </div>
+
+                    <div class="summary-row total-row">
+                        <span>Total Payable</span>
+                        <span id="cart-total" class="mono" style="color:var(--primary);">₹0.00</span>
+                    </div>
+
+                    <div id="budget-progress-container" class="budget-progress-container hidden"
+                        style="margin-top: 1rem;">
+                        <div
+                            style="display:flex; justify-content:space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                            <span style="color:var(--text-muted);">Budget Used</span>
+                            <span id="budget-percentage" class="mono font-weight-bold">0%</span>
+                        </div>
+                        <div style="height: 6px; background: var(--border); border-radius: 999px; overflow: hidden;">
+                            <div id="progress-bar-fill"
+                                style="height: 100%; width: 0%; background: var(--primary); transition: all 0.3s ease;">
+                            </div>
+                        </div>
+                        <div id="budget-warning"
+                            style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--warning); text-align: center; font-weight: 500; display:none;">
+                            ⚠️ Approaching Budget Limit!
+                        </div>
+                        <div id="budget-danger"
+                            style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--danger); text-align: center; font-weight: 500; display:none;">
+                            🛑 Budget Exceeded! Please review items.
+                        </div>
+                    </div>
+
+                    <button id="checkout-btn" class="btn-checkout" disabled>
+                        <span>Confirm Payment</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="budget-modal" class="modal hidden">
+        <div class="modal-content scale-in">
+            <h2>Set Shopping Budget</h2>
+            <p>We'll track your cart total automatically against your budget to help you manage expenses.</p>
+            <div class="input-group">
+                <span class="currency-prefix">₹</span>
+                <input type="number" id="budget-input" placeholder="0.00" min="1" step="0.01">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-budget" class="btn-secondary">Cancel</button>
+                <button id="save-budget" class="btn-primary">Save Budget</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Simulation Modal -->
+    <div id="checkout-modal" class="modal hidden">
+        <div class="modal-content scale-in" style="text-align: center;">
+            <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark_circle" cx="26" cy="26" r="25" fill="none" />
+                <path class="checkmark_check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+            </svg>
+
+            <h2 style="margin-top: 1.5rem;">Payment Successful!</h2>
+            <p>Your items and digital receipt have been saved securely.</p>
+
+            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem; color: var(--text-main);">
+                Total Paid: <span id="final-paid-amount" class="mono" style="color:var(--primary);"></span>
+            </div>
+
+            <div
+                style="background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="color:var(--text-muted); font-size:0.9rem; font-weight: 500; text-transform: uppercase;">
+                    Exit Verification Code</div>
+                <div id="receipt-qr"
+                    style="font-size: 2.5rem; font-weight: 700; font-family:var(--font-mono); color: var(--text-main); margin-top: 0.5rem; letter-spacing: 2px;">
+                    #</div>
+            </div>
+
+            <p style="color: var(--secondary); font-weight: 500; font-size: 0.95rem;">Please proceed to the exit staff
+                for final weight validation using this code.</p>
+
+            <button id="new-trip-btn" class="btn-primary" style="margin-top:1.5rem; width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

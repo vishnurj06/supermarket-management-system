@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exit Validation Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .staff-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+        }
+
+        .validation-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-md);
+            margin-top: 2rem;
+        }
+
+        .input-group-lg {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group-lg input {
+            flex: 1;
+            font-size: 1.25rem;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .input-group-lg button {
+            padding: 0 2rem;
+            font-size: 1.1rem;
+        }
+
+        .order-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .detail-item .label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .detail-item .value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .validation-action {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        .weight-input-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .weight-input-container input {
+            flex: 1;
+            font-size: 1.5rem;
+            text-align: right;
+            padding: 1rem;
+            font-family: var(--font-mono);
+        }
+
+        .weight-unit {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+
+        #validation-result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 2px solid transparent;
+        }
+
+        .result-verified {
+            background: #d1fae5;
+            color: #059669;
+            border-color: #34d399 !important;
+        }
+
+        .result-recheck {
+            background: #fef3c7;
+            color: #d97706;
+            border-color: #fbd38d !important;
+            animation: pulse-border 2s infinite;
+        }
+
+        .result-inspection {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #f87171 !important;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        @keyframes pulse-border {
+            0% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="staff-container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Point of Sale - Exit Validation</h1>
+            <a href="/logout" class="btn-secondary">Logout</a>
+        </div>
+
+        <div class="validation-card">
+            <h2 style="margin-bottom: 1.5rem;">Enter Customer Code</h2>
+            <div class="input-group-lg">
+                <input type="text" id="order-id-input" placeholder="e.g. AB12C3">
+                <button id="fetch-order-btn" class="btn-primary">Find Order</button>
+            </div>
+
+            <div id="order-details-section" class="hidden">
+                <div class="order-details-grid scale-in">
+                    <div class="detail-item">
+                        <span class="label">Customer Username</span>
+                        <span class="value" id="display-customer">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Total Amount Paid</span>
+                        <span class="value mono text-primary" id="display-amount">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Expected Weight (DB)</span>
+                        <span class="value mono" id="display-expected-weight" style="color:var(--primary);">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Payment Status</span>
+                        <span class="status-badge" id="display-status">--</span>
+                    </div>
+                </div>
+
+                <div class="validation-action scale-in">
+                    <h3 style="margin-bottom: 0.5rem;">Physical Scale Measurement</h3>
+                    <div class="weight-input-container">
+                        <input type="number" id="measured-weight" placeholder="0">
+                        <span class="weight-unit">g</span>
+                        <button id="validate-btn" class="btn-primary"
+                            style="padding: 1rem 2rem; font-size:1.1rem;">Verify & Clear</button>
+                    </div>
+                </div>
+
+                <div id="validation-result" class="hidden"></div>
+            </div>
+        </div>
+
+        <div class="validation-card" style="margin-top:2rem;">
+            <h2 style="margin-bottom: 1rem;">Live Pending Transactions</h2>
+            <div id="pending-orders-list" style="display:flex; flex-direction:column; gap:0.5rem;">
+                <div style="color:var(--text-muted); text-align:center;">Looking for new transactions...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentExitCode = null;
+
+        document.getElementById('fetch-order-btn').addEventListener('click', async () => {
+            const exit_code = document.getElementById('order-id-input').value.trim();
+            if (!exit_code) return;
+
+            const btn = document.getElementById('fetch-order-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="loader" style="width:1rem;height:1rem;"></div>';
+
+            document.getElementById('validation-result').className = 'hidden';
+
+            try {
+                const res = await fetch(`/api/order/${exit_code}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    resetOrderDetails();
+                    return;
+                }
+
+                currentExitCode = data.exit_code;
+                document.getElementById('display-customer').textContent = data.username;
+                document.getElementById('display-amount').textContent = '₹' + parseFloat(data.total_amount).toFixed(2);
+                document.getElementById('display-expected-weight').textContent = data.total_expected_weight + 'g';
+                document.getElementById('display-status').textContent = data.payment_status === 'COMPLETED' ? 'COMPLETED' : 'PENDING';
+                document.getElementById('display-status').className = data.payment_status === 'COMPLETED' ? 'status-badge status-verified' : 'status-badge status-pending';
+
+                const measuredWeightInput = document.getElementById('measured-weight');
+                measuredWeightInput.value = '';
+                measuredWeightInput.placeholder = `Hint: try ${data.total_expected_weight}g`;
+
+                document.getElementById('order-details-section').classList.remove('hidden');
+            } catch (err) {
+                alert('Error fetching order');
+                resetOrderDetails();
+            } finally {
+                btn.innerHTML = originalText;
+            }
+        });
+
+        document.getElementById('order-id-input').addEventListener('input', (e) => {
+            if (!e.target.value.trim()) {
+                resetOrderDetails();
+            }
+        });
+
+        function resetOrderDetails() {
+            currentExitCode = null;
+            document.getElementById('order-details-section').classList.add('hidden');
+            document.getElementById('display-customer').textContent = '--';
+            document.getElementById('display-amount').textContent = '--';
+            document.getElementById('display-expected-weight').textContent = '--';
+            document.getElementById('display-status').textContent = '--';
+            document.getElementById('display-status').className = 'status-badge';
+            document.getElementById('measured-weight').value = '';
+            document.getElementById('measured-weight').placeholder = '0';
+            document.getElementById('validation-result').className = 'hidden';
+        }
+
+        document.getElementById('validate-btn').addEventListener('click', async () => {
+            if (!currentExitCode) return;
+            const mwStr = document.getElementById('measured-weight').value;
+            if (mwStr === '') return alert('Enter measured weight');
+            const mw = parseFloat(mwStr);
+
+            const btn = document.getElementById('validate-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="loader" style="width:1rem;height:1rem; border-color:white; border-bottom-color:transparent;"></div>';
+
+            try {
+                const res = await fetch('/api/validate_exit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        exit_code: currentExitCode,
+                        measured_weight: mw
+                    })
+                });
+                const data = await res.json();
+
+                const resultDiv = document.getElementById('validation-result');
+                resultDiv.textContent = data.message || data.error;
+                resultDiv.className = '';
+
+                if (res.ok) {
+                    if (data.status === 'EXITED' || data.status === 'verified') {
+                        resultDiv.classList.add('result-verified');
+                        setTimeout(() => {
+                            resetOrderDetails();
+                            document.getElementById('order-id-input').value = '';
+                            if (typeof fetchPendingOrders === 'function') fetchPendingOrders();
+                        }, 2500);
+                    } else if (data.status === 'inspection') {
+                        resultDiv.classList.add('result-inspection');
+                    } else if (data.status === 'recheck') {
+                        resultDiv.classList.add('result-recheck');
+                        // Optional: update button to indicate a retry attempt
+                        btn.innerHTML = "Retry Verification";
+                        return; // Exit early to preserve retry UI state
+                    }
+                } else {
+                    resultDiv.classList.add('result-inspection');
+                }
+            } catch (err) {
+                alert('Error validating');
+            } finally {
+                if (btn.innerHTML.includes('loader')) btn.innerHTML = originalText;
+            }
+        });
+
+        async function fetchPendingOrders() {
+            try {
+                const res = await fetch('/api/orders/recent');
+                if (!res.ok) return;
+                const data = await res.json();
+                const pending = data.filter(o => o.exit_status !== 'verified' && o.exit_status !== 'EXITED');
+
+                const list = document.getElementById('pending-orders-list');
+                if (pending.length === 0) {
+                    list.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding: 2rem 0;">No pending transactions right now.</div>';
+                    return;
+                }
+
+                let html = '';
+                pending.forEach(o => {
+                    html += `<div style="display:flex; justify-content:space-between; padding:1rem; background:var(--bg-light); border:1px solid var(--border); border-radius:0.5rem; align-items:center;">
+                        <div>
+                            <span class="mono" style="font-weight:600; font-size:1.1rem; color: var(--primary);">#${o.exit_code}</span>
+                            <span style="color:var(--text-muted); margin-left:0.5rem;">${o.date || ''}</span>
+                        </div>
+                        <button class="btn-secondary" onclick="document.getElementById('order-id-input').value='${o.exit_code}'; document.getElementById('fetch-order-btn').click();" style="padding: 0.4rem 1rem;">Process</button>
+                    </div>`;
+                });
+                list.innerHTML = html;
+            } catch (e) { console.error('Polling error:', e); }
+        }
+
+        setInterval(fetchPendingOrders, 5000);
+        fetchPendingOrders();
+    </script>
+</body>
+
+</html>

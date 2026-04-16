@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--text-main);
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-toolbar {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-light);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .admin-img-preview {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: white;
+            padding: 2px;
+        }
+
+        .flex-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .alert-box {
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #34d399;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #f87171;
+        }
+
+        .filter-select {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            outline: none;
+            min-width: 200px;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container">
+        <div class="dashboard-header">
+            <div>
+                <h1 style="font-size: 1.5rem; display:flex; align-items:center; gap:0.5rem;">
+                    SmartMart Administration Panel
+                </h1>
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.25rem;">Supermarket Administration
+                    Dashboard</p>
+            </div>
+            <a href="/logout" class="btn-secondary">Logout System</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert-box alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase;">Active Inventory
+                    Lines</h3>
+                <div class="stat-value" style="color: var(--primary);">{{ total_products }}</div>
+            </div>
+            <div class="stat-card"
+                style="{% if low_stock_items|length > 0 %}border-color: var(--warning); background-color: var(--warning-bg);{% endif %}">
+                <h3 style="color: var(--warning); font-size: 0.9rem; text-transform: uppercase;">Low Stock Warnings</h3>
+                <div class="stat-value" style="color: var(--warning);">{{ low_stock_items|length }}</div>
+                {% if low_stock_items|length > 0 %}
+                <div style="font-size:0.8rem; color:var(--warning); margin-top:0.2rem; font-weight:500;">Action
+                    Required: Stock < 10</div>
+                        {% endif %}
+                </div>
+                <div class="stat-card">
+                    <h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase;">Total Historical
+                        Orders</h3>
+                    <div class="stat-value">{{ orders|length }}</div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <div class="table-toolbar">
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <h2 style="font-size: 1.25rem;">SmartMart Inventory Catalog</h2>
+                        <select id="category-filter" class="filter-select">
+                            <option value="all">Every Category</option>
+                            <!-- Extracted via JS -->
+                        </select>
+                    </div>
+                    <button class="btn-primary" onclick="openAddModal()">+ Add New Product</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU/ID</th>
+                            <th>Image</th>
+                            <th>Product Title</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Weight</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-tbody">
+                        {% for p in products %}
+                        <tr class="product-row" data-category="{{ p.category }}"
+                            style="{% if p.stock < 10 %}background: #fef2f2;{% endif %}">
+                            <td class="mono" style="color:var(--text-muted);">#{{ p.id }}</td>
+                            <td>
+                                <img class="admin-img-preview" src="{{ p.image_url }}" alt="img"
+                                    onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' fill=\\'%23f1f5f9\\' viewBox=\\'0 0 100 100\\'><rect width=\\'100\\' height=\\'100\\'/></svg>'">
+                            </td>
+                            <td style="font-weight:500;">{{ p.name }}</td>
+                            <td>
+                                <span
+                                    style="background:var(--bg-light); border:1px solid var(--border); padding: 0.2rem 0.6rem; border-radius:999px; font-size:0.8rem; color:var(--text-muted); text-transform:capitalize;">
+                                    {{ p.category }}
+                                </span>
+                            </td>
+                            <td class="mono text-primary" style="font-weight:600;">₹{{ "%.2f"|format(p.price) }}</td>
+                            <td class="mono" style="color:var(--text-muted);">{{ p.weight_g }}g</td>
+                            <td class="mono">
+                                {% if p.stock < 5 %} <span style="color: var(--danger); font-weight: 700;">{{ p.stock }}
+                                    🛑</span>
+                                    {% elif p.stock <= 20 %} <span style="color: var(--warning); font-weight: 700;">{{
+                                        p.stock }} ⚠️</span>
+                                        {% else %}
+                                        <span style="color: var(--secondary); font-weight: 600;">{{ p.stock }}</span>
+                                        {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex-actions">
+                                    <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;"
+                                        onclick='openEditModal({{ p|tojson|safe }})'>Edit</button>
+                                    <form action="/admin/product/delete/{{ p.id }}" method="POST" style="margin:0;"
+                                        onsubmit="return confirm('⚠️ IRREVERSIBLE ACTION.\n\nAre you positive you want to completely delete {{ p.name }} from the catalog?');">
+                                        <button type="submit" class="btn-danger"
+                                            style="padding: 0.3rem 0.6rem; font-size:0.8rem;">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-wrapper">
+                <div class="table-toolbar">
+                    <h2 style="font-size: 1.25rem;">Point of Sale - Exit Validations</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Receipt ID</th>
+                            <th>Customer</th>
+                            <th>Timestamp</th>
+                            <th>Revenue</th>
+                            <th>Exp. Weight</th>
+                            <th>Scale Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        {% for order in orders %}
+                        <tr>
+                            <td class="mono" style="font-weight:600;">#{{ order.exit_code }}</td>
+                            <td>{{ order.username }}</td>
+                            <td class="mono" style="color:var(--text-muted); font-size:0.9rem;">{{
+                                order.date.strftime('%b %d, %Y %H:%M') if order.date else '' }}</td>
+                            <td class="mono text-primary" style="font-weight:600;">₹{{ "%.2f"|format(order.total_amount)
+                                }}</td>
+                            <td class="mono">{{ order.total_expected_weight }}g</td>
+                            <td>
+                                <span class="status-badge status-{{ order.exit_status }}">
+                                    {{ order.exit_status|upper }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align:center; color: var(--text-muted); padding:3rem;">No recent
+                                transactions.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Product Modal -->
+        <div id="product-modal" class="modal hidden">
+            <div class="modal-content scale-in" style="max-width: 500px;">
+                <h2 id="modal-title">Add/Edit Product</h2>
+                <p style="margin-bottom: 1.5rem;">Update the centralized inventory database system.</p>
+                <form id="product-form" action="" method="POST">
+                    <div class="form-group input-group">
+                        <label>Product Title</label>
+                        <input type="text" name="name" id="p-name" required placeholder="e.g. Aashirvaad Atta">
+                    </div>
+
+                    <div class="form-group input-group" style="display:flex; gap:1rem; margin-bottom: 1rem;">
+                        <div style="flex:1;">
+                            <label>Category Group</label>
+                            <select name="category" id="p-category" required>
+                                <option value="staples">Staples</option>
+                                <option value="dairy">Dairy</option>
+                                <option value="snacks">Snacks</option>
+                                <option value="beverages">Beverages</option>
+                                <option value="produce">Produce</option>
+                                <option value="household">Household</option>
+                                <option value="personal_care">Personal Care</option>
+                                <option value="bakery">Bakery</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label>Barcode / APN</label>
+                            <input type="text" name="barcode" id="p-barcode" placeholder="e.g. IN10001">
+                        </div>
+                    </div>
+
+                    <div class="form-group input-group" style="display:flex; gap:1rem; margin-bottom: 1rem;">
+                        <div style="flex:1;">
+                            <label>Retail Price (₹)</label>
+                            <input type="number" step="0.01" min="0" name="price" id="p-price" required>
+                        </div>
+                        <div style="flex:1;">
+                            <label>Stock Count</label>
+                            <input type="number" step="1" min="0" name="stock" id="p-stock" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group input-group" style="display:flex; gap:1rem; margin-bottom: 1rem;">
+                        <div style="flex:1;">
+                            <label>Physical Weight (grams)</label>
+                            <input type="number" step="1" min="0" name="weight_g" id="p-weight" required>
+                        </div>
+                        <div style="flex:1;">
+                            <label>Image Filename</label>
+                            <input type="text" name="image_url" id="p-image" placeholder="e.g. rice.jpg" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top: 2rem;">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Abandon Changes</button>
+                        <button type="submit" class="btn-primary" id="modal-submit-btn">Commit to Database</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            // Category Filtering Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                const rows = document.querySelectorAll('.product-row');
+                const categories = new Set();
+
+                rows.forEach(row => {
+                    let cat = row.dataset.category;
+                    if (cat) categories.add(cat);
+                });
+
+                const select = document.getElementById('category-filter');
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1).replace('_', ' ');
+                    select.appendChild(opt);
+                });
+
+                select.addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    rows.forEach(row => {
+                        if (val === 'all' || row.dataset.category === val) row.style.display = '';
+                        else row.style.display = 'none';
+                    });
+                });
+            });
+
+            // Modal Logic
+            const modal = document.getElementById('product-modal');
+            const form = document.getElementById('product-form');
+            const modalTitle = document.getElementById('modal-title');
+
+            function openAddModal() {
+                modalTitle.textContent = 'Add New Inventory SKU';
+                form.action = '/admin/product/add';
+                form.reset();
+                modal.classList.remove('hidden');
+            }
+
+            function openEditModal(product) {
+                modalTitle.textContent = 'Modify SKU: ' + product.id;
+                form.action = '/admin/product/edit/' + product.id;
+
+                document.getElementById('p-name').value = product.name;
+                document.getElementById('p-category').value = product.category || 'staples';
+                document.getElementById('p-barcode').value = product.barcode || '';
+                document.getElementById('p-price').value = parseFloat(product.price).toFixed(2);
+                document.getElementById('p-stock').value = product.stock;
+                document.getElementById('p-weight').value = product.weight_g;
+                document.getElementById('p-image').value = product.image_url;
+
+                modal.classList.remove('hidden');
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            async function pollRecentOrders() {
+                try {
+                    const res = await fetch('/api/orders/recent');
+                    if (!res.ok) return;
+                    const orders = await res.json();
+
+                    const tbody = document.getElementById('orders-tbody');
+                    if (!tbody) return;
+
+                    if (orders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding:3rem;">No recent transactions.</td></tr>';
+                        return;
+                    }
+
+                    let html = '';
+                    orders.forEach(o => {
+                        const amount = parseFloat(o.total_amount).toFixed(2);
+                        html += `<tr>
+                            <td class="mono" style="font-weight:600;">#${o.exit_code}</td>
+                            <td>${o.username}</td>
+                            <td class="mono" style="color:var(--text-muted); font-size:0.9rem;">${o.date || ''}</td>
+                            <td class="mono text-primary" style="font-weight:600;">₹${amount}</td>
+                            <td class="mono">${o.total_expected_weight}g</td>
+                            <td><span class="status-badge status-${o.exit_status}">${o.exit_status.toUpperCase()}</span></td>
+                        </tr>`;
+                    });
+                    tbody.innerHTML = html;
+                } catch (e) { console.error("Polling sync error", e); }
+            }
+            setInterval(pollRecentOrders, 5000);
+        </script>
+</body>
+
+</html>
