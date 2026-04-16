@@ -401,3 +401,85 @@ document.addEventListener("DOMContentLoaded", () => {
     init();
     renderCart();
 });
+
+
+// ==========================================
+// QR CODE SCANNER LOGIC
+// ==========================================
+const scannerModal = document.getElementById('scanner-modal');
+const startScanBtn = document.getElementById('start-scan-btn');
+const closeScanBtn = document.getElementById('close-scanner-btn');
+let html5QrCode;
+
+if (startScanBtn && scannerModal) {
+    startScanBtn.addEventListener('click', () => {
+        scannerModal.classList.remove('hidden');
+        
+        // Initialize the scanner
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" }, // Prefer back camera on phones
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+            (decodedText, decodedResult) => {
+                // SUCCESSFUL SCAN!
+                html5QrCode.stop(); // Turn off camera
+                scannerModal.classList.add('hidden');
+                handleSuccessfulScan(decodedText);
+            },
+            (errorMessage) => {
+                // Ignore background frame errors, it happens constantly while searching for a QR code
+            }
+        ).catch((err) => {
+            alert("Camera access denied or not available. Please allow camera permissions.");
+            scannerModal.classList.add('hidden');
+        });
+    });
+
+    closeScanBtn.addEventListener('click', () => {
+        if (html5QrCode) {
+            html5QrCode.stop().catch(err => console.error(err));
+        }
+        scannerModal.classList.add('hidden');
+    });
+}
+
+async function handleSuccessfulScan(scannedText) {
+    if (!scannedText.startsWith('SMARTMART:')) {
+        alert('Invalid QR Code. Please scan a valid SmartMart product tag.');
+        return;
+    }
+
+    // Extract the barcode/SKU from the QR Code
+    const productIdentifier = scannedText.split(':')[1];
+    
+    // Find the product in our locally loaded database
+    const product = state.products.find(p => 
+        String(p.id) === String(productIdentifier) || 
+        String(p.barcode) === String(productIdentifier)
+    );
+
+    if (!product) {
+        alert('Product not found in the current store catalog.');
+        return;
+    }
+
+    // Add it to the JS Cart exactly as if the user clicked it!
+    addToCart(product.id);
+
+    // Flash a nice success message on the button
+    const scanBtn = document.getElementById('start-scan-btn');
+    const originalText = scanBtn.innerHTML;
+    
+    scanBtn.innerHTML = `✅ ${product.name} Added!`;
+    scanBtn.style.background = '#059669'; // Turn button green
+    scanBtn.style.color = 'white';
+    
+    // Change the button back to normal after 2 seconds
+    setTimeout(() => {
+        scanBtn.innerHTML = originalText;
+        scanBtn.style.background = 'var(--text-main)';
+    }, 2000);
+}

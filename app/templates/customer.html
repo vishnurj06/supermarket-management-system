@@ -92,6 +92,7 @@
             }
         }
     </style>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 
 <body>
@@ -129,8 +130,11 @@
                     <p class="subtitle">Click on products to add them to your smart cart seamlessly.</p>
                 </div>
 
-                <div class="filter-bar">
-                    <input type="text" id="search-input" class="search-input"
+                <div class="filter-bar" style="display: flex; gap: 1rem;">
+                    <button id="start-scan-btn" class="btn-primary" style="background: var(--text-main); padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap;">
+                        <span style="font-size: 1.2rem;">📷</span> Scan Item
+                    </button>
+                    <input type="text" id="search-input" class="search-input" style="flex: 1;"
                         placeholder="Search for groceries, household...">
                 </div>
 
@@ -258,6 +262,17 @@
                 for final weight validation using this code.</p>
 
             <button id="new-trip-btn" class="btn-primary" style="margin-top:1.5rem; width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <div id="scanner-modal" class="modal hidden">
+        <div class="modal-content scale-in" style="max-width: 400px; text-align: center;">
+            <h2 style="margin-bottom: 0.5rem;">Scan Product</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Point your camera at the SmartMart QR code</p>
+            
+            <div id="reader" style="width: 100%; border-radius: 0.5rem; overflow: hidden; box-shadow: inset 0 0 0 1px var(--border);"></div>
+            
+            <button id="close-scanner-btn" class="btn-secondary" style="margin-top: 1.5rem; width: 100%;">Cancel Scanning</button>
         </div>
     </div>
 

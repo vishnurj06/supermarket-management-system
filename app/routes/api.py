@@ -135,3 +135,50 @@ def api_validate_exit():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+@api_bp.route('/cart/scan', methods=['POST'])
+def scan_to_cart():
+    # 1. Security Check
+    if 'user_id' not in session and 'guest_id' not in session:
+        return jsonify({'error': 'Session expired. Please log in again.'}), 401
+
+    data = request.get_json()
+    identifier = data.get('identifier')
+
+    if not identifier:
+        return jsonify({'error': 'No barcode detected.'}), 400
+
+    # 2. Find the product (Checks both Barcode and ID just in case)
+    all_products = Product.get_all()
+    product = next((p for p in all_products if str(p.get('barcode')) == str(identifier) or str(p['id']) == str(identifier)), None)
+
+    if not product:
+        return jsonify({'error': 'Product not found in store database.'}), 404
+
+    # 3. Add to Cart Logic
+    if 'cart' not in session:
+        session['cart'] = {}
+
+    p_id_str = str(product['id'])
+    
+    # If already in cart, increase quantity. Otherwise, add new item.
+    if p_id_str in session['cart']:
+        session['cart'][p_id_str]['quantity'] += 1
+    else:
+        session['cart'][p_id_str] = {
+            'id': product['id'],
+            'name': product['name'],
+            'price': float(product['price']),
+            'weight_g': product.get('weight_g', 0),
+            'image_url': product.get('image_url', ''),
+            'quantity': 1
+        }
+    
+    session.modified = True
+
+    return jsonify({
+        'success': True,
+        'name': product['name'],
+        'price': product['price']
+    })
