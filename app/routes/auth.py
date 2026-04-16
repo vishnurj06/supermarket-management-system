@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
-from werkzeug.security import check_password_hash  # <-- Added this import!
+from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User
 
 auth_bp = Blueprint('auth', __name__)
@@ -27,6 +27,30 @@ def login():
         return render_template('login.html', error="Invalid credentials")
             
     return render_template('login.html')
+
+#customer register route
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        # 1. Check if the username is already taken
+        existing_user = User.get_by_username(username)
+        if existing_user:
+            flash('Username already exists. Please choose a different one.', 'error')
+            return redirect(url_for('auth.register'))
+            
+        # 2. Create the new customer
+        success = User.create_customer(username, password)
+        if success:
+            flash('Account created successfully! Please log in.', 'success')
+            return redirect(url_for('auth.login'))
+        else:
+            flash('An error occurred. Please try again.', 'error')
+            
+    return render_template('register.html')
+
 
 # logout route
 @auth_bp.route('/logout')

@@ -11,7 +11,7 @@ def create_app():
     @app.before_request
     def require_login():
         # Notice we updated the endpoints to include their blueprint names
-        allowed_routes = ['auth.login', 'static', 'auth.guest_start', 'api.api_products', 'api.api_checkout']
+        allowed_routes = ['auth.login', 'auth.register', 'static', 'auth.guest_start', 'api.api_products', 'api.api_checkout']
         if request.endpoint not in allowed_routes and 'user_id' not in session and 'guest_id' not in session:
             return redirect(url_for('auth.login'))
 

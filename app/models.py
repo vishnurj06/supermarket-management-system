@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash
 import pymysql.cursors
 from app.config import Config
 
@@ -20,6 +21,23 @@ class User:
             with conn.cursor() as cursor:
                 cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
                 return cursor.fetchone()
+        finally:
+            conn.close()
+
+    @classmethod
+    def create_customer(cls, username, password):
+        # We hash the password before saving it for security
+        hashed_pw = generate_password_hash(password)
+        conn = DB.get_connection() 
+        try:
+            with conn.cursor() as cursor:
+                sql = "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, 'customer')"
+                cursor.execute(sql, (username, hashed_pw))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error creating user: {e}")
+            return False
         finally:
             conn.close()
 
