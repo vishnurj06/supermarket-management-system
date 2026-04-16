@@ -147,8 +147,10 @@
             </div>
             <div class="subtitle">Smart Queue-less Supermarket Billing System</div>
 
-            <p>New customer? <a href="{{ url_for('auth.register') }}">Register an account</a></p>
-
+            {% if 'customer' in config.get('REGISTERED_BLUEPRINTS', []) %}
+                <p>New customer? <a href="{{ url_for('auth.register') }}">Register an account</a></p>
+            {% endif %}
+            
             <div class="divider">Employee Portal</div>
 
             {% if error %}

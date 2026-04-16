@@ -1,11 +1,7 @@
 from flask import Blueprint, render_template, session, redirect, url_for, flash
-from app.models import Order  # <-- Added Order model import
+from app.models import Order
 
 customer_bp = Blueprint('customer', __name__)
-
-@customer_bp.route('/')
-def index():
-    return redirect(url_for('auth.login'))
 
 @customer_bp.route('/customer')
 def customer_view():
@@ -18,17 +14,14 @@ def customer_view():
     else:
         return redirect(url_for('auth.login'))
 
-# --- NEW ROUTE ---
 @customer_bp.route('/my_orders')
 def my_orders():
-    # Only registered users (who have a user_id) can view order history
     if 'user_id' not in session:
         flash("Please register or log in to view order history.", "error")
         return redirect(url_for('auth.login'))
         
     user_orders = Order.get_by_user_id(session['user_id'])
     
-    # Format the dates nicely for the user
     for o in user_orders:
         if o['date']:
             o['date'] = o['date'].strftime('%b %d, %Y')

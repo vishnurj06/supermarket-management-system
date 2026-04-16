@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="admin-body">
+    <nav class="navbar admin-nav">
+        <div class="nav-brand">Admin Dashboard</div>
+        <div class="nav-links">
+            <a href="{{ url_for('admin.admin_dashboard') }}">Inventory</a>
+            <a href="{{ url_for('staff.staff_panel') }}">Staff Panel</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
