@@ -2,33 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register - Supermarket System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SmartMart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg-light);
+        }
+        .login-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-sm);
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .login-box h1 {
+            font-size: 1.75rem;
+            color: var(--text-main);
+        }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
+        .error-msg {
+            background: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .success-msg {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #34d399;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .btn-full {
+            width: 100%;
+            padding: 0.85rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>Customer Registration</h2>
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div class="login-box scale-in">
+            <div class="login-logo">
+                <h1>SmartMart</h1>
+            </div>
+            <div class="subtitle">Create a Customer Account</div>
 
-        <form method="POST" action="{{ url_for('auth.register') }}">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" name="username" required>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" required>
-            </div>
-            <button type="submit" class="btn">Create Account</button>
-        </form>
-        <p>Already have an account? <a href="{{ url_for('auth.login') }}">Log in here</a></p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'error' %}
+                            <div class="error-msg">{{ message }}</div>
+                        {% else %}
+                            <div class="success-msg">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <div class="form-group">
+                    <label>Choose a Username</label>
+                    <input type="text" name="username" required placeholder="e.g. john_doe">
+                </div>
+                <div class="form-group">
+                    <label>Create a Password</label>
+                    <input type="password" name="password" required placeholder="Minimum 6 characters">
+                </div>
+                <button type="submit" class="btn-primary btn-full">Create Account</button>
+            </form>
+
+            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                Already have an account? <a href="{{ url_for('auth.login') }}" style="color: var(--primary); font-weight: 500; text-decoration: none;">Sign in</a>
+            </p>
+        </div>
     </div>
 </body>
 </html>

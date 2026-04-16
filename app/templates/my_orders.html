@@ -2,45 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Orders - Supermarket System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - SmartMart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+        .orders-table th {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        .orders-table td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            color: var(--text-main);
+        }
+        .orders-table tr:last-child td {
+            border-bottom: none;
+        }
+        .orders-table tr:hover td {
+            background: #f8fafc;
+        }
+        .empty-orders {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+    </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Welcome, {{ username }}</h1>
-        <div class="nav-links">
-            <a href="{{ url_for('customer.customer_view') }}" class="btn">Back to Store</a>
-            <a href="{{ url_for('auth.logout') }}" class="btn" style="background-color: #ff4c4c;">Logout</a>
-        </div>
-    </div>
+    <div class="app-container">
+        <header class="app-header" style="justify-content: space-between; gap: 2rem; flex-wrap: wrap;">
+            <div class="logo">
+                <h1>SmartMart</h1>
+            </div>
+            <div style="display:flex; align-items:center; gap: 1rem; margin-left: auto;">
+                <span style="color:var(--text-muted); font-size:0.9rem; font-weight: 500;">Hi, {{ username }}</span>
+                <a href="/customer" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration:none;">Back to Store</a>
+                <a href="/logout" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration:none; color: var(--danger); border-color: #fca5a5; background: #fef2f2;">Logout</a>
+            </div>
+        </header>
 
-    <div class="container" style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <h2>My Order History</h2>
-        
-        {% if orders %}
-            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                <thead>
-                    <tr style="background-color: #f4f4f4; text-align: left;">
-                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Date</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Exit Code</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Total Paid</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ order.date }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>{{ order.exit_code }}</strong></td>
-                        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${{ "%.2f"|format(order.total_amount) }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ order.exit_status | capitalize }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>You haven't placed any orders yet! Head back to the store to start shopping.</p>
-        {% endif %}
+        <main style="max-width: 1000px; margin: 0 auto; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>My Order History</h2>
+            </div>
+
+            {% if orders %}
+                <table class="orders-table scale-in">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Exit Code</th>
+                            <th>Total Paid</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td style="color: var(--text-muted);">{{ order.date }}</td>
+                            <td class="mono" style="font-weight: 600; font-size: 1.1rem;">{{ order.exit_code }}</td>
+                            <td class="mono" style="font-weight: 600; color: var(--primary);">₹{{ "%.2f"|format(order.total_amount) }}</td>
+                            <td>
+                                <span class="status-badge status-{{ order.exit_status }}">
+                                    {{ order.exit_status | capitalize }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-orders scale-in">
+                    <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;">📦</div>
+                    <h3 style="margin-bottom: 0.5rem;">No orders yet</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Looks like you haven't made any purchases.</p>
+                    <a href="/customer" class="btn-primary" style="text-decoration:none;">Start Shopping</a>
+                </div>
+            {% endif %}
+        </main>
     </div>
 </body>
 </html>
