@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash
+import os
+import qrcode
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash, current_app
 from app.models import Product, Order, User
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -72,3 +74,62 @@ def delete_product(product_id):
         flash(f'Error deleting product: {str(e)}', 'error')
         
     return redirect(url_for('admin.admin_dashboard'))
+
+
+#qr generator route
+def generate_product_qr(product_id, barcode):
+    """Generates a QR code image for a product and saves it to the static folder"""
+    # The data embedded in the QR code. We use the barcode if it exists, otherwise the ID.
+    qr_data = f"SMARTMART:{barcode if barcode else product_id}"
+    
+    # Generate the QR Code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Save it to the static/qrcodes directory
+    filename = f"qr_{product_id}.png"
+    filepath = os.path.join(current_app.root_path, 'static', 'qrcodes', filename)
+    img.save(filepath)
+    
+    return filename
+
+@admin_bp.route('/product/qr/<int:product_id>')
+def view_qr(product_id):
+    # Fetch the product from your database using your existing model
+    # Note: Adjust 'Product.get_by_id' if your method is named differently!
+    from app.models import Product 
+    product = Product.get_by_id(product_id)
+    
+    if not product:
+        flash("Product not found.", "error")
+        return redirect(url_for('admin.admin_dashboard'))
+        
+    filename = f"qr_{product_id}.png"
+    filepath = os.path.join(current_app.root_path, 'static', 'qrcodes', filename)
+    
+    # If the QR code doesn't exist yet, generate it on the fly!
+    if not os.path.exists(filepath):
+        generate_product_qr(product['id'], product.get('barcode'))
+        
+    qr_url = url_for('static', filename=f'qrcodes/{filename}')
+    
+    # We will render a very simple, clean page just for displaying the QR code
+    return f"""
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; background:#f8fafc;">
+        <div style="background:white; padding:3rem; border-radius:1rem; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); text-align:center;">
+            <h2>{product['name']}</h2>
+            <p style="color:#64748b; margin-bottom:2rem;">SKU/Barcode: {product.get('barcode', product['id'])}</p>
+            <img src="{qr_url}" alt="QR Code" style="width:250px; height:250px; border:1px solid #e2e8f0; border-radius:0.5rem;">
+            <br><br>
+            <button onclick="window.print()" style="background:#2563eb; color:white; border:none; padding:0.75rem 1.5rem; border-radius:0.5rem; cursor:pointer; font-size:1rem; margin-right:1rem;">🖨️ Print Tag</button>
+            <a href="/admin" style="color:#2563eb; text-decoration:none; font-weight:600;">Back to Dashboard</a>
+        </div>
+    </div>
+    """
