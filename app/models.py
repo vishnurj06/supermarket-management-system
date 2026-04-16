@@ -193,3 +193,18 @@ class Order:
                 conn.commit()
         finally:
             conn.close()
+
+    @classmethod
+    def get_by_user_id(cls, user_id):
+        conn = DB.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Fetch all orders for this user, newest first
+                sql = "SELECT * FROM orders WHERE user_id = %s ORDER BY date DESC"
+                cursor.execute(sql, (user_id,))
+                return cursor.fetchall()
+        except Exception as e:
+            print(f"Error fetching user orders: {e}")
+            return []
+        finally:
+            conn.close()

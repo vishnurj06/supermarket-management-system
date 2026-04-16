@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Orders - Supermarket System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome, {{ username }}</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('customer.customer_view') }}" class="btn">Back to Store</a>
+            <a href="{{ url_for('auth.logout') }}" class="btn" style="background-color: #ff4c4c;">Logout</a>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h2>My Order History</h2>
+        
+        {% if orders %}
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr style="background-color: #f4f4f4; text-align: left;">
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Date</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Exit Code</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Total Paid</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ order.date }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>{{ order.exit_code }}</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${{ "%.2f"|format(order.total_amount) }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ order.exit_status | capitalize }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>You haven't placed any orders yet! Head back to the store to start shopping.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
