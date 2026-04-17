@@ -327,18 +327,57 @@ async function processCheckout() {
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
+        const finalExitCode = data.exit_code;
+        const qrData = `SMARTMART:${finalExitCode}`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`;
+
+        // 1. Build the itemized list
+        let itemsHtml = state.cart.map(item => `
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px dashed #e2e8f0; padding:6px 0; color: #475569;">
+                <span>${item.quantity}x ${item.name}</span>
+                <span style="font-weight:600;">₹${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+        `).join('');
+
+        // 2. Inject the Real Itemized Receipt + QR Image
         DOM.finalPaidAmount.textContent = formatCurrency(data.total_paid);
-        DOM.receiptQr.textContent = data.exit_code;
+        DOM.receiptQr.innerHTML = `
+            <div id="printable-receipt" style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: left; margin-bottom: 20px;">
+                <h3 style="text-align:center; margin-top:0; color:#1e293b; font-size:1.1rem;">SmartMart Digital Receipt</h3>
+                <div style="color: #64748b; font-size: 0.8rem; text-align:center; margin-bottom: 10px;">Exit Code: #${finalExitCode}</div>
+                ${itemsHtml}
+                <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:10px; font-size: 1rem; color: #1e293b;">
+                    <span>Total Paid:</span>
+                    <span>₹${data.total_paid}</span>
+                </div>
+            </div>
+            
+            <img src="${qrUrl}" alt="Exit QR Code" style="border-radius: 8px; border: 4px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 0 auto; display: block; width: 150px;">
+            <div style="font-size: 1.2rem; margin-top: 10px; color: #1e293b; font-weight: bold; text-align: center;">#${finalExitCode}</div>
+            
+            <button onclick="window.print()" style="margin-top: 20px; background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%;">
+                📄 Download / Print Receipt
+            </button>
+            <style>
+                @media print {
+                    body * { visibility: hidden; }
+                    #checkout-modal, #checkout-modal * { visibility: visible; }
+                    #checkout-modal { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0; }
+                    .modal-content { max-height: none !important; overflow: visible !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; }
+                    button, .close-btn, h2 { display: none !important; }
+                }
+            </style>
+        `;
+        
         DOM.checkoutModal.classList.remove('hidden');
 
-        // Reset state after checkout to prevent lingering cart data
         state.cart = [];
         updateCartUI();
 
     } catch (err) {
         alert("Checkout failed: " + err.message);
         DOM.checkoutBtn.disabled = false;
-        DOM.checkoutBtn.innerHTML = `< span > Confirm Payment</span > `;
+        DOM.checkoutBtn.innerHTML = `<span>Confirm Payment</span>`;
     }
 }
 
@@ -379,10 +418,10 @@ function renderCart() {
                         <div class="cart-title">${item.name}</div>
                         <div class="cart-meta">₹${item.price} • ${item.weight_g}g</div>
                     </div>
-                    <div class="cart-controls">
-                        <button onclick="updateQty(${item.id}, -1)">-</button>
-                        <span>${item.quantity}</span>
-                        <button onclick="updateQty(${item.id}, 1)">+</button>
+                    <div class="cart-controls" style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 8px;">
+                        <button onclick="updateQty(${item.id}, -1)" style="width: 28px; height: 28px; border: none; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">-</button>
+                        <span style="font-weight: 600; width: 20px; text-align: center; font-size: 0.9rem;">${item.quantity}</span>
+                        <button onclick="updateQty(${item.id}, 1)" style="width: 28px; height: 28px; border: none; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">+</button>
                     </div>
                 `;
 
@@ -401,7 +440,6 @@ document.addEventListener("DOMContentLoaded", () => {
     init();
     renderCart();
 });
-
 
 // ==========================================
 // QR CODE SCANNER LOGIC
@@ -483,7 +521,6 @@ async function handleSuccessfulScan(scannedText) {
         scanBtn.style.background = 'var(--text-main)';
     }, 2000);
 }
-
 
 // --- Modal Visibility Controls ---
 function openProfileModal() { document.getElementById('profile-modal').classList.remove('hidden'); }

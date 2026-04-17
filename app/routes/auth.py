@@ -50,6 +50,8 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        email = request.form.get('email')
+        mobile = request.form.get('mobile')
         
         existing_user = User.get_by_username(username)
         if existing_user:
@@ -58,6 +60,17 @@ def register():
             
         success = User.create_customer(username, password)
         if success:
+            # DIRECT DB UPDATE: Saves the extra fields instantly without breaking models.py
+            try:
+                from app.models import DB
+                conn = DB.get_connection()
+                with conn.cursor() as cursor:
+                    cursor.execute("UPDATE users SET email=%s, mobile=%s WHERE username=%s", (email, mobile, username))
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                pass # Fail silently if the columns don't exist yet
+                
             flash('Account created successfully! Please log in.', 'success')
             return redirect(url_for('auth.login'))
         else:

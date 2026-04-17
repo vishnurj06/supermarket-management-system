@@ -104,7 +104,7 @@ def add_product():
             name=request.form['name'], price=float(request.form['price']),
             stock=int(request.form['stock']), weight_g=int(request.form.get('weight_g', 0)),
             image_url=request.form['image_url'], category=request.form.get('category', ''),
-            barcode=barcode_input
+            barcode=barcode_input, vendor_phone=request.form.get('vendor_phone', '')
         )
         flash('Product added successfully!', 'success')
     except Exception as e: flash(f'Error adding product: {str(e)}', 'error')
@@ -117,7 +117,7 @@ def edit_product(product_id):
         Product.update(
             product_id=product_id, name=request.form['name'], price=float(request.form['price']),
             stock=int(request.form['stock']), weight_g=int(request.form.get('weight_g', 0)),
-            image_url=request.form['image_url']
+            image_url=request.form['image_url'], vendor_phone=request.form.get('vendor_phone', '')
         )
         flash('Product updated successfully!', 'success')
     except Exception as e: flash(f'Error updating product: {str(e)}', 'error')
@@ -151,6 +151,7 @@ def view_qr(product_id):
     qr_url = url_for('static', filename=f'qrcodes/{filename}')
     
     return f"""
+    <style>@media print {{ button, a {{ display: none !important; }} }}</style>
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; background:#f8fafc;">
         <div style="background:white; padding:3rem; border-radius:1rem; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); text-align:center;">
             <h2>{product['name']}</h2>

@@ -156,53 +156,62 @@
             </div>
 
             <div class="control-bar">
-                <input type="text" id="searchInput" class="control-input" placeholder="🔍 Search by Product Name or SKU..." onkeyup="filterTable()">
+                <input type="text" id="searchInput" class="control-input" placeholder="Search by Product Name or SKU..." onkeyup="filterTable()">
                 <select id="categoryFilter" class="control-select" onchange="filterTable()">
-                    <option value="all">📁 All Categories</option>
+                    <option value="all">All Categories</option>
                 </select>
             </div>
 
-            <div class="table-wrapper">
-                <table id="inventoryTable">
-                    <thead>
-                        <tr>
-                            <th>SKU</th>
-                            <th>Image</th>
-                            <th class="sortable" onclick="sortTable('inventoryTable', 2, 'str')" title="Click to sort">Name ↕</th>
-                            <th class="sortable" onclick="sortTable('inventoryTable', 3, 'num')" title="Click to sort">Price ↕</th>
-                            <th class="sortable" onclick="sortTable('inventoryTable', 4, 'num')" title="Click to sort">Stock ↕</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for p in products %}
-                        <tr class="product-row" data-name="{{ p.name|lower }}" data-sku="#{{ p.id }}" data-category="{{ p.category|default('uncategorized')|lower }}">
-                            <td style="color:#64748b;">#{{ p.id }}</td>
-                            <td><img src="{{ p.image_url }}" class="img-thumb" onerror="this.src='/static/images/product_placeholder.png'"></td>
-                            <td style="font-weight:600;">{{ p.name }}</td>
-                            <td data-value="{{ p.price }}">₹{{ p.price }}</td>
-                            <td style="font-weight:700; color: {{ '#dc2626' if p.stock < 10 else '#059669' }};" data-value="{{ p.stock }}">{{ p.stock }}</td>
-                            <td>
-                                <div style="display:flex; gap:5px;">
-                                    <a href="{{ url_for('admin.view_qr', product_id=p.id) }}" class="btn-secondary">QR</a>
-                                    <button onclick='openEditModal({{ p|tojson|safe }})' class="btn-secondary">Edit</button>
+            <div id="inventoryGridWrapper">
+                {% for category, category_products in products|groupby('category') %}
+                    <div class="category-section" data-category="{{ category|lower }}">
+                        <h3 style="margin-top: 2rem; color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; text-transform: capitalize;">
+                            {{ category|replace('_', ' ') }}
+                        </h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+                            {% for p in category_products %}
+                            <div class="product-card-admin" data-name="{{ p.name|lower }}" data-sku="#{{ p.id }}" style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; text-align: center; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                {% if p.stock < 10 %}
+                                    <span style="position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 99px; font-weight: bold;">Low Stock</span>
+                                {% endif %}
+                                
+                                <img src="{{ p.image_url }}" alt="{{ p.name }}" onerror="this.src='/static/images/product_placeholder.png'" style="height: 100px; object-fit: contain; margin-bottom: 1rem;">
+                                
+                                <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #1e293b;">{{ p.name }}</h4>
+                                <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 0.5rem;">{{ p.weight_g }}g | SKU: #{{ p.id }}</div>
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+                                    <span style="font-weight: 700; color: #2563eb;">₹{{ p.price }}</span>
+                                    <span style="background: {{ '#fee2e2' if p.stock < 10 else '#f1f5f9' }}; color: {{ '#991b1b' if p.stock < 10 else '#475569' }}; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Qty: {{ p.stock }}</span>
+                                </div>
+                                
+                                <div style="display: flex; gap: 5px; margin-top: 15px; justify-content: center;">
+                                    <a href="{{ url_for('admin.view_qr', product_id=p.id) }}" class="btn-secondary" style="flex: 1; text-align: center;">QR</a>
+                                    <button onclick='openEditModal({{ p|tojson|safe }})' class="btn-secondary" style="flex: 1;">Edit</button>
                                     <form action="{{ url_for('admin.delete_product', product_id=p.id) }}" method="POST" style="margin:0;">
                                         <button type="submit" style="color:#dc2626; border:1px solid #fecaca; background:#fee2e2; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer;" onclick="return confirm('Delete item?')">Del</button>
                                     </form>
                                 </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <div id="noResultsMsg" class="hidden" style="padding: 3rem; text-align: center; color: #64748b;">
-                    No products match your search or filter.
-                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div id="noResultsMsg" class="hidden" style="padding: 3rem; text-align: center; color: #64748b;">
+                No products match your search or filter.
             </div>
         </section>
 
         <section id="customers" class="tab-content hidden">
-            <h2 style="margin-top:0; font-size: 1.5rem; color: #1e293b; margin-bottom: 1rem;">Registered Customers</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; font-size: 1.5rem; color: #1e293b;">Registered Customers</h2>
+                <button onclick="alert('To avoid WhatsApp spam bans, copy these numbers to create a Broadcast List:\n\n{% for u in users %}{{ u.mobile }}{% if not loop.last %}, {% endif %}{% endfor %}')" class="btn-primary" style="background: #10b981; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
+                    📣 Send Bulk Offer via WhatsApp
+                </button>
+            </div>
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -211,7 +220,6 @@
                             <th>Username</th>
                             <th>Email</th>
                             <th>Mobile No.</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -221,18 +229,9 @@
                             <td style="font-weight:600; color:#1e293b;">{{ u.username }}</td>
                             <td style="color:#64748b;">{{ u.email or 'N/A' }}</td>
                             <td style="color:#64748b;">{{ u.mobile or 'N/A' }}</td>
-                            <td>
-                                {% if u.mobile %}
-                                <a href="https://wa.me/{{ u.mobile|replace('+', '')|replace(' ', '') }}?text=Hi%20{{ u.username }}%2C%20Check%20out%20our%20latest%20weekend%20offers%20at%20SmartMart!" target="_blank" class="btn-wa">
-                                    💬 Send Offer
-                                </a>
-                                {% else %}
-                                <span style="background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:0.8rem;">No Number</span>
-                                {% endif %}
-                            </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" style="padding: 3rem; text-align: center; color: #64748b;">No customers found in database.</td></tr>
+                        <tr><td colspan="4" style="padding: 3rem; text-align: center; color: #64748b;">No customers found in database.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -245,10 +244,10 @@
             </div>
 
             <div class="control-bar">
-                <input type="text" id="searchSalesInput" class="control-input" placeholder="🔍 Search by Order Code or Username..." onkeyup="filterSalesTable()">
+                <input type="text" id="searchSalesInput" class="control-input" placeholder="Search by Order Code or Username..." onkeyup="filterSalesTable()">
                 
                 <select id="timeFilter" class="control-select" onchange="filterSalesTable()">
-                    <option value="all">📅 All Time (Till Date)</option>
+                    <option value="all">All Time (Till Date)</option>
                     <option value="today">Today</option>
                     <option value="week">This Week</option>
                     <option value="month">This Month</option>
@@ -256,7 +255,7 @@
                 </select>
 
                 <select id="statusFilter" class="control-select" onchange="filterSalesTable()">
-                    <option value="all">🏷️ All Statuses</option>
+                    <option value="all">All Statuses</option>
                     <option value="verified">Verified</option>
                     <option value="pending">Pending</option>
                     <option value="alert">Alert / Recheck</option>
@@ -401,11 +400,19 @@
                     </div>
                 </div>
                 
-                <label style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:10px; display:block;">Image URL / Filename</label>
-                <input type="text" name="image_url" id="p-image" required>
-                
-                <label style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:10px; display:block;">Category</label>
-                <input type="text" name="category" id="p-category" placeholder="e.g. Snacks, Dairy">
+                <div style="display:flex; gap:10px; margin-top: 10px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem; color:#64748b; font-weight:600; display:block;">Image URL / Filename</label>
+                        <input type="text" name="image_url" id="p-image" required>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem; color:#64748b; font-weight:600; display:block;">Category</label>
+                        <input type="text" name="category" id="p-category" placeholder="e.g. Snacks, Dairy">
+                    </div>
+                </div>
+
+                <label style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:10px; display:block;">Vendor WhatsApp Number</label>
+                <input type="text" name="vendor_phone" id="p-vendor" placeholder="+919876543210">
 
                 <div style="margin-top:20px; display:flex; gap:10px;">
                     <button type="submit" class="btn-primary" style="flex:1; padding: 0.8rem;">Save Changes</button>
@@ -443,58 +450,77 @@
             document.getElementById('product-modal').classList.remove('hidden');
         }
 
-        function openAddModal() {
+        function openEditModal(product) {
             const form = document.getElementById('product-form');
-            form.action = "/admin/add_product";
-            document.getElementById('modal-title').textContent = 'Add New Product';
-            form.reset();
+            form.action = "/admin/product/edit/" + product.id; 
+            document.getElementById('modal-title').textContent = 'Edit SKU: #' + product.id;
+            document.getElementById('p-name').value = product.name;
+            document.getElementById('p-price').value = product.price;
+            document.getElementById('p-stock').value = product.stock;
+            document.getElementById('p-weight').value = product.weight_g || 0; 
+            document.getElementById('p-barcode').value = product.barcode || '';
+            document.getElementById('p-image').value = product.image_url;
+            document.getElementById('p-category').value = product.category || '';
+            document.getElementById('p-vendor').value = product.vendor_phone || '';
             document.getElementById('product-modal').classList.remove('hidden');
         }
 
-        // --- INVENTORY FILTER LOGIC ---
+        // --- NEW: INVENTORY GRID FILTER LOGIC ---
         function filterTable() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedCategory = document.getElementById('categoryFilter').value.toLowerCase();
-            const rows = document.querySelectorAll('.product-row');
-            let visibleCount = 0;
+            
+            const sections = document.querySelectorAll('.category-section');
+            let overallVisibleCount = 0;
 
-            rows.forEach(row => {
-                const name = row.getAttribute('data-name');
-                const sku = row.getAttribute('data-sku');
-                const category = row.getAttribute('data-category');
+            sections.forEach(section => {
+                const sectionCategory = section.getAttribute('data-category');
+                const products = section.querySelectorAll('.product-card-admin');
+                let sectionHasVisibleProduct = false;
 
-                const matchesSearch = name.includes(searchTerm) || sku.includes(searchTerm);
-                const matchesCategory = (selectedCategory === 'all') || (category === selectedCategory);
+                products.forEach(card => {
+                    const name = card.getAttribute('data-name');
+                    const sku = card.getAttribute('data-sku');
+                    
+                    const matchesSearch = name.includes(searchTerm) || sku.includes(searchTerm);
+                    const matchesCategory = (selectedCategory === 'all') || (sectionCategory === selectedCategory);
 
-                if (matchesSearch && matchesCategory) {
-                    row.style.display = '';
-                    visibleCount++;
+                    if (matchesSearch && matchesCategory) {
+                        card.style.display = '';
+                        sectionHasVisibleProduct = true;
+                        overallVisibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Hide the whole category header if no products match inside it
+                if (sectionHasVisibleProduct) {
+                    section.style.display = '';
                 } else {
-                    row.style.display = 'none';
+                    section.style.display = 'none';
                 }
             });
 
             const msg = document.getElementById('noResultsMsg');
-            if(visibleCount === 0) { msg.classList.remove('hidden'); } else { msg.classList.add('hidden'); }
+            if(overallVisibleCount === 0) { msg.classList.remove('hidden'); } else { msg.classList.add('hidden'); }
         }
 
         function populateCategories() {
-            const rows = document.querySelectorAll('.product-row');
-            const categories = new Set();
-            rows.forEach(row => {
-                let cat = row.getAttribute('data-category');
-                if(cat && cat !== 'uncategorized') categories.add(cat);
-            });
+            const sections = document.querySelectorAll('.category-section');
             const select = document.getElementById('categoryFilter');
-            categories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.textContent = "📁 " + cat.charAt(0).toUpperCase() + cat.slice(1); 
-                select.appendChild(option);
+            sections.forEach(section => {
+                let cat = section.getAttribute('data-category');
+                if(cat && cat !== 'uncategorized') {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1); 
+                    select.appendChild(option);
+                }
             });
         }
 
-        // --- NEW: SALES FILTER LOGIC ---
+        // --- SALES FILTER LOGIC ---
         function isDateInRange(isoString, rangeMode) {
             if (!isoString) return false;
             const rowDate = new Date(isoString);

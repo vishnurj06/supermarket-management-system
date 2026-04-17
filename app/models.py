@@ -78,29 +78,29 @@ class Product:
             conn.close()
 
     @staticmethod
-    def create(name, price, stock, weight_g, image_url, category='', barcode=''):
+    def create(name, price, stock, weight_g, image_url, category='', barcode='', vendor_phone=''):
         conn = DB.get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute('''
-                    INSERT INTO products (name, price, stock, weight_g, image_url, category, barcode)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ''', (name, price, stock, weight_g, image_url, category, barcode))
+                    INSERT INTO products (name, price, stock, weight_g, image_url, category, barcode, vendor_phone)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (name, price, stock, weight_g, image_url, category, barcode, vendor_phone))
                 conn.commit()
                 return cursor.lastrowid
         finally:
             conn.close()
 
     @staticmethod
-    def update(product_id, name, price, stock, weight_g, image_url):
+    def update(product_id, name, price, stock, weight_g, image_url, vendor_phone=''):
         conn = DB.get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute('''
                     UPDATE products 
-                    SET name=%s, price=%s, stock=%s, weight_g=%s, image_url=%s
+                    SET name=%s, price=%s, stock=%s, weight_g=%s, image_url=%s, vendor_phone=%s
                     WHERE id=%s
-                ''', (name, price, stock, weight_g, image_url, product_id))
+                ''', (name, price, stock, weight_g, image_url, vendor_phone, product_id))
                 conn.commit()
         finally:
             conn.close()
@@ -115,7 +115,6 @@ class Product:
                 conn.commit()
         finally:
             conn.close()
-
 
 class Order:
     @staticmethod

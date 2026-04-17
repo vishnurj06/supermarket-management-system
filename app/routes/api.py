@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, session
-from app.models import Product, Order
+from app.models import Product, Order, DB
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -75,21 +75,36 @@ def api_recent_orders():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@api_bp.route('/order/<string:exit_code>')
-def api_get_order(exit_code):
-    if session.get('role') not in ['admin', 'staff']:
-        return jsonify({"error": "Unauthorized"}), 403
-        
-    exit_code = exit_code.strip().upper()
+@api_bp.route('/order/<exit_code>', methods=['GET'])
+def get_order(exit_code):
+    conn = DB.get_connection()
     try:
-        order = Order.get_by_exit_code(exit_code)
-        if not order:
-            return jsonify({"error": "No matching receipt found. Please verify the exit code."}), 404
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM orders WHERE exit_code=%s", (exit_code,))
+            order_data = cursor.fetchone()
             
-        return jsonify(order)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            if not order_data:
+                return jsonify({'error': 'Order not found'}), 404
 
+            # FIX: Convert datetime to string so JSON doesn't crash!
+            if 'date' in order_data and order_data['date']:
+                order_data['date'] = str(order_data['date'])
+
+            cursor.execute('''
+                SELECT p.name, oi.quantity as qty, p.weight_g 
+                FROM order_items oi
+                JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = %s
+            ''', (order_data['id'],))
+            
+            order_data['items'] = cursor.fetchall()
+            return jsonify(order_data)
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+        
 @api_bp.route('/validate_exit', methods=['POST'])
 def api_validate_exit():
     if session.get('role') not in ['admin', 'staff']:

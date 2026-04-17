@@ -7,6 +7,7 @@
     <title>Exit Validation Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         .staff-container {
             max-width: 800px;
@@ -23,6 +24,20 @@
             margin-top: 2rem;
         }
 
+        .scanner-container {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            background: #0f172a; /* Dark slate background */
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
+        }
+        /* Make the camera text/borders look good on dark background */
+        #reader { border: none !important; color: white !important; }
+        #reader select { padding: 0.5rem; border-radius: 6px; margin-bottom: 1rem; }
+        
         .input-group-lg {
             display: flex;
             gap: 1rem;
@@ -36,6 +51,13 @@
             font-family: var(--font-mono);
             letter-spacing: 2px;
             text-align: center;
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            outline: none;
+        }
+
+        .input-group-lg input:focus {
+            border-color: var(--primary);
         }
 
         .input-group-lg button {
@@ -64,6 +86,7 @@
             color: var(--text-muted);
             font-size: 0.9rem;
             text-transform: uppercase;
+            font-weight: 600;
         }
 
         .detail-item .value {
@@ -94,7 +117,12 @@
             text-align: right;
             padding: 1rem;
             font-family: var(--font-mono);
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            outline: none;
         }
+        
+        .weight-input-container input:focus { border-color: var(--primary); }
 
         .weight-unit {
             font-size: 1.5rem;
@@ -107,15 +135,17 @@
             padding: 1.5rem;
             border-radius: 0.75rem;
             text-align: center;
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-weight: 700;
+            font-size: 1.2rem;
             border: 2px solid transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .result-verified {
-            background: #d1fae5;
-            color: #059669;
-            border-color: #34d399 !important;
+            background: #dcfce7;
+            color: #166534;
+            border-color: #4ade80 !important;
         }
 
         .result-recheck {
@@ -133,34 +163,61 @@
         }
 
         @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            25% {
-                transform: translateX(-5px);
-            }
-
-            75% {
-                transform: translateX(5px);
-            }
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
 
         @keyframes pulse-border {
-            0% {
-                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
         }
+
+        /* --- NEW: Force styling on the ugly default scanner UI --- */
+        #reader { border: none !important; background: transparent !important; }
+        #reader img { display: none !important; } /* Hides the default mobile icon */
+        #reader__dashboard_section_swaplink { display: none !important; } /* Hides 'Scan an Image File' */
+        
+        #reader__dashboard_section_csr { padding: 1rem !important; }
+
+        /* Nuclear option to hide the scanner's extra links */
+        #reader a, div[id^="reader__dashboard_section_swaplink"] { 
+            display: none !important; 
+            visibility: hidden !important; 
+            opacity: 0 !important; 
+            height: 0 !important; 
+        }
+        
+        /* Style the Start/Stop camera buttons */
+        #html5-qrcode-button-camera-start, 
+        #html5-qrcode-button-camera-stop {
+            background-color: var(--primary) !important;
+            color: white !important;
+            border: none !important;
+            padding: 0.8rem 1.5rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-family: inherit !important;
+            cursor: pointer !important;
+            transition: 0.2s;
+            margin-bottom: 10px;
+        }
+        
+        #html5-qrcode-button-camera-start:hover { background-color: #1d4ed8 !important; }
+        
+        /* Style the camera dropdown menu */
+        #reader__camera_selection {
+            padding: 0.6rem !important;
+            border-radius: 6px !important;
+            border: 1px solid var(--border) !important;
+            font-family: inherit !important;
+            margin-bottom: 10px !important;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        
     </style>
 </head>
 
@@ -172,9 +229,16 @@
         </div>
 
         <div class="validation-card">
-            <h2 style="margin-bottom: 1.5rem;">Enter Customer Code</h2>
+            <h2 style="margin-bottom: 1rem;">Scanner & Manual Entry</h2>
+            
+            <div id="reader" class="scanner-container"></div>
+            
+            <div style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">
+                — Or Enter Customer Code Manually —
+            </div>
+
             <div class="input-group-lg">
-                <input type="text" id="order-id-input" placeholder="e.g. AB12C3">
+                <input type="text" id="order-id-input" placeholder="e.g. SM-2026-0023" autocomplete="off">
                 <button id="fetch-order-btn" class="btn-primary">Find Order</button>
             </div>
 
@@ -198,10 +262,16 @@
                     </div>
                 </div>
 
+                <div class="purchased-items-container scale-in" style="margin-top: 1.5rem; margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Purchased Items</h3>
+                    <ul id="display-items-list" style="list-style: none; padding: 0; margin: 0; background: var(--bg-light); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem; max-height: 200px; overflow-y: auto;">
+                        </ul>
+                </div>
+
                 <div class="validation-action scale-in">
                     <h3 style="margin-bottom: 0.5rem;">Physical Scale Measurement</h3>
                     <div class="weight-input-container">
-                        <input type="number" id="measured-weight" placeholder="0">
+                        <input type="number" id="measured-weight" placeholder="0" autocomplete="off">
                         <span class="weight-unit">g</span>
                         <button id="validate-btn" class="btn-primary"
                             style="padding: 1rem 2rem; font-size:1.1rem;">Verify & Clear</button>
@@ -222,10 +292,31 @@
 
     <script>
         let currentExitCode = null;
+        let html5QrcodeScanner = null;
+        let isProcessing = false; // NEW: Flag to prevent crashes and double-scans
 
+        // --- INITIALIZE CAMERA SCANNER ---
+        document.addEventListener("DOMContentLoaded", () => {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            
+            html5QrcodeScanner.render((decodedText) => {
+                if (isProcessing) return; // Ignore scans if we are already processing one
+                
+                // Clean the text, place it in the manual box, and click the fetch button automatically
+                const code = decodedText.replace('SMARTMART:', '').replace('#', '').trim();
+                document.getElementById('order-id-input').value = code;
+                document.getElementById('fetch-order-btn').click();
+            });
+        });
+
+        // --- FETCH ORDER LOGIC ---
         document.getElementById('fetch-order-btn').addEventListener('click', async () => {
+            if (isProcessing) return;
+            
             const exit_code = document.getElementById('order-id-input').value.trim();
             if (!exit_code) return;
+
+            isProcessing = true; // Lock the UI
 
             const btn = document.getElementById('fetch-order-btn');
             const originalText = btn.innerHTML;
@@ -247,19 +338,39 @@
                 document.getElementById('display-customer').textContent = data.username;
                 document.getElementById('display-amount').textContent = '₹' + parseFloat(data.total_amount).toFixed(2);
                 document.getElementById('display-expected-weight').textContent = data.total_expected_weight + 'g';
-                document.getElementById('display-status').textContent = data.payment_status === 'COMPLETED' ? 'COMPLETED' : 'PENDING';
-                document.getElementById('display-status').className = data.payment_status === 'COMPLETED' ? 'status-badge status-verified' : 'status-badge status-pending';
+                
+                // 1. UPDATED STATUS LOGIC
+                const payStatus = (data.payment_status || 'PAID').toUpperCase();
+                const statusBadge = document.getElementById('display-status');
+                statusBadge.textContent = payStatus;
+                statusBadge.className = (payStatus === 'PENDING') ? 'status-badge status-pending' : 'status-badge status-verified';
 
+                // 2. NEW ITEMS LIST LOGIC
+                const itemsList = document.getElementById('display-items-list');
+                if (data.items && data.items.length > 0) {
+                    itemsList.innerHTML = data.items.map(item => `
+                        <li style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-weight: 600; color: var(--text-main);">${item.qty}x ${item.name}</span>
+                            <span style="color: var(--text-muted); font-family: var(--font-mono);">${item.weight_g ? item.weight_g + 'g' : ''}</span>
+                        </li>
+                    `).join('');
+                } else {
+                    itemsList.innerHTML = `<li style="color: var(--text-muted); text-align: center;">Item details not provided by database.</li>`;
+                }
+
+                // 3. MEASURED WEIGHT INPUT (Declared only once!)
                 const measuredWeightInput = document.getElementById('measured-weight');
                 measuredWeightInput.value = '';
                 measuredWeightInput.placeholder = `Hint: try ${data.total_expected_weight}g`;
-
+                
                 document.getElementById('order-details-section').classList.remove('hidden');
+                measuredWeightInput.focus(); 
             } catch (err) {
                 alert('Error fetching order');
                 resetOrderDetails();
             } finally {
                 btn.innerHTML = originalText;
+                setTimeout(() => { isProcessing = false; }, 1500); 
             }
         });
 
@@ -282,11 +393,19 @@
             document.getElementById('validation-result').className = 'hidden';
         }
 
+        // --- VALIDATE & CLEAR LOGIC (With 5% Margin) ---
         document.getElementById('validate-btn').addEventListener('click', async () => {
             if (!currentExitCode) return;
             const mwStr = document.getElementById('measured-weight').value;
             if (mwStr === '') return alert('Enter measured weight');
-            const mw = parseFloat(mwStr);
+            
+            const measuredWeight = parseFloat(mwStr);
+            const expectedWeight = parseFloat(document.getElementById('display-expected-weight').textContent.replace('g', ''));
+
+            const marginOfError = expectedWeight * 0.05;
+            const weightDifference = Math.abs(expectedWeight - measuredWeight);
+            
+            const finalWeightToSend = (weightDifference <= marginOfError) ? expectedWeight : measuredWeight;
 
             const btn = document.getElementById('validate-btn');
             const originalText = btn.innerHTML;
@@ -298,7 +417,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         exit_code: currentExitCode,
-                        measured_weight: mw
+                        measured_weight: finalWeightToSend
                     })
                 });
                 const data = await res.json();
@@ -319,9 +438,8 @@
                         resultDiv.classList.add('result-inspection');
                     } else if (data.status === 'recheck') {
                         resultDiv.classList.add('result-recheck');
-                        // Optional: update button to indicate a retry attempt
                         btn.innerHTML = "Retry Verification";
-                        return; // Exit early to preserve retry UI state
+                        return; 
                     }
                 } else {
                     resultDiv.classList.add('result-inspection');
@@ -333,6 +451,7 @@
             }
         });
 
+        // --- LIVE POLLING LOGIC ---
         async function fetchPendingOrders() {
             try {
                 const res = await fetch('/api/orders/recent');
@@ -364,5 +483,4 @@
         fetchPendingOrders();
     </script>
 </body>
-
 </html>

@@ -74,6 +74,7 @@
                             <th>Exit Code</th>
                             <th>Total Paid</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,6 +87,9 @@
                                 <span class="status-badge status-{{ order.exit_status }}">
                                     {{ order.exit_status | capitalize }}
                                 </span>
+                            </td>
+                            <td>
+                                <button onclick="printPastReceipt('{{ order.exit_code }}')" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border: none; background: #e0e7ff; color: #3730a3; cursor: pointer; border-radius: 6px; font-weight: 600;">📄 Print</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -100,6 +104,37 @@
                 </div>
             {% endif %}
         </main>
+    </div>
+
+    <script>
+        async function printPastReceipt(exitCode) {
+            try {
+                const res = await fetch(`/api/order/${exitCode}`);
+                const data = await res.json();
+                if(data.error) return alert("Could not fetch receipt details.");
+
+                let itemsHtml = '';
+                if(data.items) {
+                    itemsHtml = data.items.map(i => `<div style="display:flex; justify-content:space-between; font-size:14px; border-bottom: 1px dashed #ccc; padding: 6px 0;"><span>${i.qty}x ${i.name}</span><span>${i.weight_g ? i.weight_g+'g' : ''}</span></div>`).join('');
+                }
+
+                const printWindow = window.open('', '_blank', 'width=400,height=600');
+                printWindow.document.write(`
+                    <html><head><title>Receipt #${exitCode}</title></head>
+                    <body style="font-family:sans-serif; padding:20px; max-width:400px; margin:0 auto; color:#333;">
+                        <h2 style="text-align:center; margin-bottom:5px;">SmartMart</h2>
+                        <div style="text-align:center; color:#666; font-size: 14px; margin-bottom:20px;">Receipt #${exitCode}</div>
+                        ${itemsHtml}
+                        <h3 style="display:flex; justify-content:space-between; margin-top:20px;"><span>Total Paid:</span><span>₹${data.total_amount}</span></h3>
+                        <div style="text-align:center; margin-top:30px;">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SMARTMART:${exitCode}" />
+                        </div>
+                        <script>window.onload = function() { window.print(); window.close(); }<\/script>
+                    </body></html>
+                `);
+            } catch(e) { alert("Error generating receipt."); }
+        }
+    </script>
     </div>
 </body>
 </html>
