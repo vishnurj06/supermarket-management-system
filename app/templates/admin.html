@@ -1,266 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise Admin Dashboard</title>
+    <title>SmartMart Enterprise Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .admin-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+        :root { --sidebar-w: 260px; --primary: #2563eb; }
+        
+        body { margin: 0; background: #f8fafc; font-family: 'Inter', sans-serif; display: block; }
+        
+        .sidebar { width: var(--sidebar-w); background: #0f172a; color: white; position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; z-index: 1000; }
+        .sidebar-brand { padding: 2rem; font-size: 1.4rem; font-weight: 700; border-bottom: 1px solid #1e293b; }
+        .sidebar-nav { flex: 1; padding: 1rem 0; }
+        .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 2rem; color: #94a3b8; text-decoration: none; cursor: pointer; }
+        .nav-link:hover, .nav-link.active { color: white; background: #1e293b; }
+        .nav-link.active { border-left: 4px solid var(--primary); }
+        
+        .admin-content { display: block !important; margin-left: var(--sidebar-w); width: calc(100% - var(--sidebar-w)); padding: 3rem; box-sizing: border-box; min-height: 100vh; }
+        
+        .analytics-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .analytic-card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; text-align: center;}
+        .metric-box { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .metric-label { font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-value { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin-top: 5px; }
+        .metric-value.money { color: #059669; }
 
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            background: white;
-            padding: 1.5rem 2rem;
-            border-radius: 1rem;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-        }
+        .control-bar { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .control-input { flex: 1; padding: 0.6rem 1rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .control-input:focus { border-color: var(--primary); }
+        .control-select { padding: 0.6rem 1rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; background: white; outline: none; cursor: pointer; min-width: 150px; }
+        
+        .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; width: 100%; margin-top: 1rem; }
+        table { width: 100%; min-width: 800px; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 1.2rem 1rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; white-space: nowrap; user-select: none; }
+        th.sortable:hover { background: #e2e8f0; cursor: pointer; color: #1e293b; }
+        td { padding: 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; transition: background 0.2s; }
+        tr:hover td { background: #f8fafc; }
+        
+        .img-thumb { width: 45px; height: 45px; object-fit: contain; border-radius: 6px; border: 1px solid #e2e8f0; background:white; }
+        .hidden { display: none !important; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight:500; }
+        .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; text-decoration: none; font-size:0.85rem;}
+        
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: white; padding: 2.5rem; border-radius: 12px; width: 450px; max-height: 90vh; overflow-y: auto;}
+        .modal-content input { width: 100%; padding: 0.8rem; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; }
+        
+        .btn-wa { background: #25D366; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;}
+        .btn-wa:hover { background: #1ebc59; }
 
-        .dashboard-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            font-family: var(--font-mono);
-            color: var(--text-main);
-        }
-
-        .table-wrapper {
-            background: white;
-            border-radius: 1rem;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            margin-bottom: 3rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .table-toolbar {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-light);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th,
-        td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            vertical-align: middle;
-        }
-
-        th {
-            background: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover td {
-            background: #f8fafc;
-        }
-
-        .admin-img-preview {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-            background: white;
-            padding: 2px;
-        }
-
-        .flex-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .alert-box {
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            animation: scaleIn 0.3s ease-out;
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            color: #059669;
-            border: 1px solid #34d399;
-        }
-
-        .alert-error {
-            background: #fee2e2;
-            color: #dc2626;
-            border: 1px solid #f87171;
-        }
-
-        .filter-select {
-            padding: 0.6rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            outline: none;
-            min-width: 200px;
-            font-family: var(--font-sans);
-            font-size: 0.95rem;
-        }
+        /* Status Badges */
+        .status-badge { padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight: 600; border: 1px solid #e2e8f0; text-transform: uppercase; }
+        .status-verified { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .status-pending { background: #fef3c7; color: #d97706; border-color: #fde68a; }
+        .status-alert { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+        .status-default { background: #f1f5f9; color: #475569; }
     </style>
 </head>
-
 <body>
-    <div class="admin-container">
-        <div class="dashboard-header">
-            <div>
-                <h1 style="font-size: 1.5rem; display:flex; align-items:center; gap:0.5rem;">
-                    SmartMart Administration Panel
-                </h1>
-                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.25rem;">Supermarket Administration
-                    Dashboard</p>
-            </div>
-            <a href="/logout" class="btn-secondary">Logout System</a>
+    <aside class="sidebar">
+        <div class="sidebar-brand">SmartMart Admin</div>
+        <nav class="sidebar-nav">
+            <a class="nav-link" onclick="switchTab(event, 'overview')">📊 Overview</a>
+            <a class="nav-link" onclick="switchTab(event, 'inventory')">📦 Inventory</a>
+            <a class="nav-link" onclick="switchTab(event, 'sales')">💰 Sales History</a>
+            <a class="nav-link" onclick="switchTab(event, 'customers')">👥 Customers</a>
+        </nav>
+        <div style="padding:1.5rem;"><a href="/logout" style="color:white; text-decoration:none; opacity:0.7;">Logout</a></div>
+    </aside>
+
+    <main class="admin-content">
+        <div style="margin-bottom: 2rem;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div style="padding:1rem; border-radius:8px; background:{% if category=='success' %}#dcfce7; color:#166534{% else %}#fee2e2; color:#991b1b{% endif %};">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert-box alert-{{ category }}">
-            {{ message }}
-        </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <div class="dashboard-stats">
-            <div class="stat-card">
-                <h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase;">Active Inventory
-                    Lines</h3>
-                <div class="stat-value" style="color: var(--primary);">{{ total_products }}</div>
+        <section id="overview" class="tab-content">
+            <h1 style="margin-top:0; font-size: 1.8rem; color: #1e293b;">Business Intelligence</h1>
+            <div class="analytics-row">
+                <div class="analytic-card">
+                    <h3 style="margin:0; color:#64748b; font-size: 1rem;">REVENUE TRACKER</h3>
+                    <div class="metric-grid">
+                        <div class="metric-box"><div class="metric-label">Today</div><div class="metric-value money">₹{{ "%.2f"|format(stats.daily_rev) if stats else '0.00' }}</div></div>
+                        <div class="metric-box"><div class="metric-label">This Week</div><div class="metric-value money">₹{{ "%.2f"|format(stats.weekly_rev) if stats else '0.00' }}</div></div>
+                        <div class="metric-box"><div class="metric-label">This Month</div><div class="metric-value money">₹{{ "%.2f"|format(stats.monthly_rev) if stats else '0.00' }}</div></div>
+                        <div class="metric-box"><div class="metric-label">Till Date</div><div class="metric-value money">₹{{ "%.2f"|format(stats.total_rev) if stats else '0.00' }}</div></div>
+                    </div>
+                </div>
+                <div class="analytic-card">
+                    <h3 style="margin:0; color:#64748b; font-size: 1rem;">ORDER VOLUME</h3>
+                    <div class="metric-grid">
+                        <div class="metric-box"><div class="metric-label">Today</div><div class="metric-value">{{ stats.daily_ord if stats else 0 }}</div></div>
+                        <div class="metric-box"><div class="metric-label">This Week</div><div class="metric-value">{{ stats.weekly_ord if stats else 0 }}</div></div>
+                        <div class="metric-box"><div class="metric-label">This Month</div><div class="metric-value">{{ stats.monthly_ord if stats else 0 }}</div></div>
+                        <div class="metric-box"><div class="metric-label">Total</div><div class="metric-value">{{ stats.total_ord if stats else 0 }}</div></div>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card"
-                style="{% if low_stock_items|length > 0 %}border-color: var(--warning); background-color: var(--warning-bg);{% endif %}">
-                <h3 style="color: var(--warning); font-size: 0.9rem; text-transform: uppercase;">Low Stock Warnings</h3>
-                <div class="stat-value" style="color: var(--warning);">{{ low_stock_items|length }}</div>
-                {% if low_stock_items|length > 0 %}
-                <div style="font-size:0.8rem; color:var(--warning); margin-top:0.2rem; font-weight:500;">Action
-                    Required: Stock < 10</div>
-                        {% endif %}
+            
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                <div class="analytic-card"><h3 style="margin-top:0;">7-Day Sales Trend</h3><canvas id="salesChart" height="150"></canvas></div>
+                
+                <div class="analytic-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                        <h3 style="margin:0;">Vendor Action Center</h3>
+                        <span style="background:#fee2e2; color:#dc2626; padding:2px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;">{{ low_stock_items|length }} Alerts</span>
+                    </div>
+                    <div style="max-height: 280px; overflow-y: auto; padding-right: 5px;">
+                        {% for item in low_stock_items %}
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+                            <div>
+                                <div style="font-weight: 600; font-size:0.9rem; color:#1e293b;">{{ item.name }}</div>
+                                <div style="color:#dc2626; font-size:0.8rem; font-weight:600; margin-top:3px;">Stock Left: {{ item.stock }}</div>
+                            </div>
+                            <a href="https://wa.me/?text=Hi%20Vendor%2C%20we%20are%20running%20low%20on%20{{ item.name|urlencode }}%20(SKU%3A%20%23{{ item.id }}).%20Please%20restock%20urgently." target="_blank" class="btn-wa">
+                                💬 Vendor
+                            </a>
+                        </div>
+                        {% else %}
+                        <div style="text-align:center; padding: 2rem 0; color:#64748b;">
+                            <div style="font-size:2rem; margin-bottom:10px;">✅</div>
+                            All inventory levels are healthy!
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase;">Total Historical
-                        Orders</h3>
-                    <div class="stat-value">{{ orders|length }}</div>
-                </div>
+            </div>
+        </section>
+
+        <section id="inventory" class="tab-content hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h2 style="margin:0; font-size: 1.5rem; color: #1e293b;">Inventory Catalog</h2>
+                <button class="btn-primary" onclick="openAddModal()">+ Add Product</button>
+            </div>
+
+            <div class="control-bar">
+                <input type="text" id="searchInput" class="control-input" placeholder="🔍 Search by Product Name or SKU..." onkeyup="filterTable()">
+                <select id="categoryFilter" class="control-select" onchange="filterTable()">
+                    <option value="all">📁 All Categories</option>
+                </select>
             </div>
 
             <div class="table-wrapper">
-                <div class="table-toolbar">
-                    <div style="display:flex; align-items:center; gap:1rem;">
-                        <h2 style="font-size: 1.25rem;">SmartMart Inventory Catalog</h2>
-                        <select id="category-filter" class="filter-select">
-                            <option value="all">Every Category</option>
-                            <!-- Extracted via JS -->
-                        </select>
-                    </div>
-                    <button class="btn-primary" onclick="openAddModal()">+ Add New Product</button>
-                </div>
-                <table>
+                <table id="inventoryTable">
                     <thead>
                         <tr>
-                            <th>SKU/ID</th>
+                            <th>SKU</th>
                             <th>Image</th>
-                            <th>Product Title</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Weight</th>
-                            <th>Stock</th>
-                            <th>Actions</th>
+                            <th class="sortable" onclick="sortTable('inventoryTable', 2, 'str')" title="Click to sort">Name ↕</th>
+                            <th class="sortable" onclick="sortTable('inventoryTable', 3, 'num')" title="Click to sort">Price ↕</th>
+                            <th class="sortable" onclick="sortTable('inventoryTable', 4, 'num')" title="Click to sort">Stock ↕</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="inventory-tbody">
+                    <tbody>
                         {% for p in products %}
-                        <tr class="product-row" data-category="{{ p.category }}"
-                            style="{% if p.stock < 10 %}background: #fef2f2;{% endif %}">
-                            <td class="mono" style="color:var(--text-muted);">#{{ p.id }}</td>
+                        <tr class="product-row" data-name="{{ p.name|lower }}" data-sku="#{{ p.id }}" data-category="{{ p.category|default('uncategorized')|lower }}">
+                            <td style="color:#64748b;">#{{ p.id }}</td>
+                            <td><img src="{{ p.image_url }}" class="img-thumb" onerror="this.src='/static/images/product_placeholder.png'"></td>
+                            <td style="font-weight:600;">{{ p.name }}</td>
+                            <td data-value="{{ p.price }}">₹{{ p.price }}</td>
+                            <td style="font-weight:700; color: {{ '#dc2626' if p.stock < 10 else '#059669' }};" data-value="{{ p.stock }}">{{ p.stock }}</td>
                             <td>
-                                <img class="admin-img-preview" src="{{ p.image_url }}" alt="img"
-                                    onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' fill=\\'%23f1f5f9\\' viewBox=\\'0 0 100 100\\'><rect width=\\'100\\' height=\\'100\\'/></svg>'">
-                            </td>
-                            <td style="font-weight:500;">{{ p.name }}</td>
-                            <td>
-                                <span
-                                    style="background:var(--bg-light); border:1px solid var(--border); padding: 0.2rem 0.6rem; border-radius:999px; font-size:0.8rem; color:var(--text-muted); text-transform:capitalize;">
-                                    {{ p.category }}
-                                </span>
-                            </td>
-                            <td class="mono text-primary" style="font-weight:600;">₹{{ "%.2f"|format(p.price) }}</td>
-                            <td class="mono" style="color:var(--text-muted);">{{ p.weight_g }}g</td>
-                            <td class="mono">
-                                {% if p.stock < 5 %} <span style="color: var(--danger); font-weight: 700;">{{ p.stock }}
-                                    🛑</span>
-                                    {% elif p.stock <= 20 %} <span style="color: var(--warning); font-weight: 700;">{{
-                                        p.stock }} ⚠️</span>
-                                        {% else %}
-                                        <span style="color: var(--secondary); font-weight: 600;">{{ p.stock }}</span>
-                                        {% endif %}
-                            </td>
-                            <td>
-                                <div class="flex-actions">
-                                    <a href="/admin/product/qr/{{ p.id }}" target="_blank" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; text-decoration:none; background:#f0f9ff; border-color:#bae6fd; color:#0369a1;">🖨️ QR</a>
-                                    
-                                    <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;"
-                                        onclick='openEditModal({{ p|tojson|safe }})'>Edit</button>
-                                    <form action="/admin/product/delete/{{ p.id }}" method="POST" style="margin:0;"
-                                        onsubmit="return confirm('⚠️ IRREVERSIBLE ACTION.\n\nAre you positive you want to completely delete {{ p.name }} from the catalog?');">
-                                        <button type="submit" class="btn-danger"
-                                            style="padding: 0.3rem 0.6rem; font-size:0.8rem;">Delete</button>
+                                <div style="display:flex; gap:5px;">
+                                    <a href="{{ url_for('admin.view_qr', product_id=p.id) }}" class="btn-secondary">QR</a>
+                                    <button onclick='openEditModal({{ p|tojson|safe }})' class="btn-secondary">Edit</button>
+                                    <form action="{{ url_for('admin.delete_product', product_id=p.id) }}" method="POST" style="margin:0;">
+                                        <button type="submit" style="color:#dc2626; border:1px solid #fecaca; background:#fee2e2; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer;" onclick="return confirm('Delete item?')">Del</button>
                                     </form>
                                 </div>
                             </td>
@@ -268,205 +186,347 @@
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-
-            <div class="table-wrapper">
-                <div class="table-toolbar">
-                    <h2 style="font-size: 1.25rem;">Point of Sale - Exit Validations</h2>
+                <div id="noResultsMsg" class="hidden" style="padding: 3rem; text-align: center; color: #64748b;">
+                    No products match your search or filter.
                 </div>
+            </div>
+        </section>
+
+        <section id="customers" class="tab-content hidden">
+            <h2 style="margin-top:0; font-size: 1.5rem; color: #1e293b; margin-bottom: 1rem;">Registered Customers</h2>
+            <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
-                            <th>Receipt ID</th>
-                            <th>Customer</th>
-                            <th>Timestamp</th>
-                            <th>Revenue</th>
-                            <th>Exp. Weight</th>
-                            <th>Scale Status</th>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Mobile No.</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="orders-tbody">
-                        {% for order in orders %}
+                    <tbody>
+                        {% for u in users %}
                         <tr>
-                            <td class="mono" style="font-weight:600;">#{{ order.exit_code }}</td>
-                            <td>{{ order.username }}</td>
-                            <td class="mono" style="color:var(--text-muted); font-size:0.9rem;">{{
-                                order.date.strftime('%b %d, %Y %H:%M') if order.date else '' }}</td>
-                            <td class="mono text-primary" style="font-weight:600;">₹{{ "%.2f"|format(order.total_amount)
-                                }}</td>
-                            <td class="mono">{{ order.total_expected_weight }}g</td>
+                            <td style="color:#64748b;">#{{ u.id }}</td>
+                            <td style="font-weight:600; color:#1e293b;">{{ u.username }}</td>
+                            <td style="color:#64748b;">{{ u.email or 'N/A' }}</td>
+                            <td style="color:#64748b;">{{ u.mobile or 'N/A' }}</td>
                             <td>
-                                <span class="status-badge status-{{ order.exit_status }}">
-                                    {{ order.exit_status|upper }}
-                                </span>
+                                {% if u.mobile %}
+                                <a href="https://wa.me/{{ u.mobile|replace('+', '')|replace(' ', '') }}?text=Hi%20{{ u.username }}%2C%20Check%20out%20our%20latest%20weekend%20offers%20at%20SmartMart!" target="_blank" class="btn-wa">
+                                    💬 Send Offer
+                                </a>
+                                {% else %}
+                                <span style="background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:0.8rem;">No Number</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
-                        <tr>
-                            <td colspan="6" style="text-align:center; color: var(--text-muted); padding:3rem;">No recent
-                                transactions.</td>
-                        </tr>
+                        <tr><td colspan="5" style="padding: 3rem; text-align: center; color: #64748b;">No customers found in database.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <!-- Product Modal -->
-        <div id="product-modal" class="modal hidden">
-            <div class="modal-content scale-in" style="max-width: 500px;">
-                <h2 id="modal-title">Add/Edit Product</h2>
-                <p style="margin-bottom: 1.5rem;">Update the centralized inventory database system.</p>
-                <form id="product-form" action="" method="POST">
-                    <div class="form-group input-group">
-                        <label>Product Title</label>
-                        <input type="text" name="name" id="p-name" required placeholder="e.g. Aashirvaad Atta">
-                    </div>
-
-                    <div class="form-group input-group" style="display:flex; gap:1rem; margin-bottom: 1rem;">
-                        <div style="flex:1;">
-                            <label>Category Group</label>
-                            <select name="category" id="p-category" required>
-                                <option value="staples">Staples</option>
-                                <option value="dairy">Dairy</option>
-                                <option value="snacks">Snacks</option>
-                                <option value="beverages">Beverages</option>
-                                <option value="produce">Produce</option>
-                                <option value="household">Household</option>
-                                <option value="personal_care">Personal Care</option>
-                                <option value="bakery">Bakery</option>
-                            </select>
-                        </div>
-                        <div style="flex:1;">
-                            <label>Barcode / APN</label>
-                            <input type="text" name="barcode" id="p-barcode" placeholder="e.g. IN10001">
-                        </div>
-                    </div>
-
-                    <div class="form-group input-group" style="display:flex; gap:1rem; margin-bottom: 1rem;">
-                        <div style="flex:1;">
-                            <label>Retail Price (₹)</label>
-                            <input type="number" step="0.01" min="0" name="price" id="p-price" required>
-                        </div>
-                        <div style="flex:1;">
-                            <label>Stock Count</label>
-                            <input type="number" step="1" min="0" name="stock" id="p-stock" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group input-group" style="display:flex; gap:1rem; margin-bottom: 1rem;">
-                        <div style="flex:1;">
-                            <label>Physical Weight (grams)</label>
-                            <input type="number" step="1" min="0" name="weight_g" id="p-weight" required>
-                        </div>
-                        <div style="flex:1;">
-                            <label>Image Filename</label>
-                            <input type="text" name="image_url" id="p-image" placeholder="e.g. rice.jpg" required>
-                        </div>
-                    </div>
-
-                    <div class="modal-actions" style="margin-top: 2rem;">
-                        <button type="button" class="btn-secondary" onclick="closeModal()">Abandon Changes</button>
-                        <button type="submit" class="btn-primary" id="modal-submit-btn">Commit to Database</button>
-                    </div>
-                </form>
+        <section id="sales" class="tab-content hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h2 style="margin:0; font-size: 1.5rem; color: #1e293b;">Transaction History</h2>
             </div>
+
+            <div class="control-bar">
+                <input type="text" id="searchSalesInput" class="control-input" placeholder="🔍 Search by Order Code or Username..." onkeyup="filterSalesTable()">
+                
+                <select id="timeFilter" class="control-select" onchange="filterSalesTable()">
+                    <option value="all">📅 All Time (Till Date)</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                </select>
+
+                <select id="statusFilter" class="control-select" onchange="filterSalesTable()">
+                    <option value="all">🏷️ All Statuses</option>
+                    <option value="verified">Verified</option>
+                    <option value="pending">Pending</option>
+                    <option value="alert">Alert / Recheck</option>
+                </select>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="salesTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" onclick="sortTable('salesTable', 0, 'str')">Code ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable', 1, 'date')">Date & Time ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable', 2, 'str')">User ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable', 3, 'num')">Amount ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable', 4, 'str')">Status ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        {% for o in orders %}
+                        <tr class="sale-row" 
+                            data-code="{{ o.exit_code|lower }}" 
+                            data-user="{{ o.username|lower }}" 
+                            data-status="{{ o.exit_status|lower }}"
+                            data-date="{{ o.date.isoformat() if o.date else '' }}">
+                            
+                            <td style="color:#64748b;">#{{ o.exit_code }}</td>
+                            
+                            <td style="color:#64748b; font-size:0.9rem;" data-value="{{ o.date.timestamp() if o.date else 0 }}">
+                                {{ o.date.strftime('%d %b %Y, %I:%M %p') if o.date else 'N/A' }}
+                            </td>
+                            
+                            <td style="font-weight:600;">{{ o.username }}</td>
+                            <td class="text-primary" style="font-weight:700; color: #2563eb;" data-value="{{ o.total_amount }}">₹{{ o.total_amount }}</td>
+                            <td>
+                                {% if o.exit_status|lower == 'verified' %}
+                                    <span class="status-badge status-verified">Verified</span>
+                                {% elif o.exit_status|lower == 'pending' %}
+                                    <span class="status-badge status-pending">Pending</span>
+                                {% elif o.exit_status|lower in ['alert', 'recheck', 'inspection'] %}
+                                    <span class="status-badge status-alert">{{ o.exit_status|title }}</span>
+                                {% else %}
+                                    <span class="status-badge status-default">{{ o.exit_status|title }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" style="padding: 3rem; text-align: center; color: #64748b;">No transaction history found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div id="noSalesMsg" class="hidden" style="padding: 3rem; text-align: center; color: #64748b;">
+                    No transactions match your search or filters.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="product-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modal-title" style="margin-top:0;">Product Details</h2>
+            <form id="product-form" method="POST">
+                <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Product Name</label>
+                <input type="text" name="name" id="p-name" required>
+                
+                <div style="display:flex; gap:10px; margin-top: 10px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Price (₹)</label>
+                        <input type="number" step="0.01" name="price" id="p-price" required>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Stock Qty</label>
+                        <input type="number" name="stock" id="p-stock" required>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top: 10px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Weight (g)</label>
+                        <input type="number" name="weight_g" id="p-weight" required placeholder="e.g. 500">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Barcode</label>
+                        <input type="text" name="barcode" id="p-barcode" placeholder="Auto-generates if blank">
+                    </div>
+                </div>
+                
+                <label style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:10px; display:block;">Image URL / Filename</label>
+                <input type="text" name="image_url" id="p-image" required>
+                
+                <label style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:10px; display:block;">Category</label>
+                <input type="text" name="category" id="p-category" placeholder="e.g. Snacks, Dairy">
+
+                <div style="margin-top:20px; display:flex; gap:10px;">
+                    <button type="submit" class="btn-primary" style="flex:1; padding: 0.8rem;">Save Changes</button>
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('product-modal').classList.add('hidden')" style="flex:1; text-align:center; padding: 0.8rem;">Cancel</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <script>
-            // Category Filtering Logic
-            document.addEventListener('DOMContentLoaded', () => {
-                const rows = document.querySelectorAll('.product-row');
-                const categories = new Set();
-
-                rows.forEach(row => {
-                    let cat = row.dataset.category;
-                    if (cat) categories.add(cat);
-                });
-
-                const select = document.getElementById('category-filter');
-                categories.forEach(cat => {
-                    const opt = document.createElement('option');
-                    opt.value = cat;
-                    opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1).replace('_', ' ');
-                    select.appendChild(opt);
-                });
-
-                select.addEventListener('change', (e) => {
-                    const val = e.target.value;
-                    rows.forEach(row => {
-                        if (val === 'all' || row.dataset.category === val) row.style.display = '';
-                        else row.style.display = 'none';
-                    });
-                });
+    <script>
+        // --- NAVIGATION LOGIC ---
+        function switchTab(event, sectionId) {
+            if (event) event.preventDefault();
+            localStorage.setItem('activeAdminTab', sectionId);
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('onclick')?.includes(sectionId)) link.classList.add('active');
             });
+        }
 
-            // Modal Logic
-            const modal = document.getElementById('product-modal');
+        // --- MODAL LOGIC ---
+        function openEditModal(product) {
             const form = document.getElementById('product-form');
-            const modalTitle = document.getElementById('modal-title');
+            form.action = "/admin/product/edit/" + product.id; 
+            document.getElementById('modal-title').textContent = 'Edit SKU: #' + product.id;
+            document.getElementById('p-name').value = product.name;
+            document.getElementById('p-price').value = product.price;
+            document.getElementById('p-stock').value = product.stock;
+            document.getElementById('p-weight').value = product.weight_g || 0; 
+            document.getElementById('p-barcode').value = product.barcode || '';
+            document.getElementById('p-image').value = product.image_url;
+            document.getElementById('p-category').value = product.category || '';
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
 
-            function openAddModal() {
-                modalTitle.textContent = 'Add New Inventory SKU';
-                form.action = '/admin/product/add';
-                form.reset();
-                modal.classList.remove('hidden');
-            }
+        function openAddModal() {
+            const form = document.getElementById('product-form');
+            form.action = "/admin/add_product";
+            document.getElementById('modal-title').textContent = 'Add New Product';
+            form.reset();
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
 
-            function openEditModal(product) {
-                modalTitle.textContent = 'Modify SKU: ' + product.id;
-                form.action = '/admin/product/edit/' + product.id;
+        // --- INVENTORY FILTER LOGIC ---
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedCategory = document.getElementById('categoryFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('.product-row');
+            let visibleCount = 0;
 
-                document.getElementById('p-name').value = product.name;
-                document.getElementById('p-category').value = product.category || 'staples';
-                document.getElementById('p-barcode').value = product.barcode || '';
-                document.getElementById('p-price').value = parseFloat(product.price).toFixed(2);
-                document.getElementById('p-stock').value = product.stock;
-                document.getElementById('p-weight').value = product.weight_g;
-                document.getElementById('p-image').value = product.image_url;
+            rows.forEach(row => {
+                const name = row.getAttribute('data-name');
+                const sku = row.getAttribute('data-sku');
+                const category = row.getAttribute('data-category');
 
-                modal.classList.remove('hidden');
-            }
+                const matchesSearch = name.includes(searchTerm) || sku.includes(searchTerm);
+                const matchesCategory = (selectedCategory === 'all') || (category === selectedCategory);
 
-            function closeModal() {
-                modal.classList.add('hidden');
-            }
-
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal();
+                if (matchesSearch && matchesCategory) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
             });
 
-            async function pollRecentOrders() {
-                try {
-                    const res = await fetch('/api/orders/recent');
-                    if (!res.ok) return;
-                    const orders = await res.json();
+            const msg = document.getElementById('noResultsMsg');
+            if(visibleCount === 0) { msg.classList.remove('hidden'); } else { msg.classList.add('hidden'); }
+        }
 
-                    const tbody = document.getElementById('orders-tbody');
-                    if (!tbody) return;
+        function populateCategories() {
+            const rows = document.querySelectorAll('.product-row');
+            const categories = new Set();
+            rows.forEach(row => {
+                let cat = row.getAttribute('data-category');
+                if(cat && cat !== 'uncategorized') categories.add(cat);
+            });
+            const select = document.getElementById('categoryFilter');
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = "📁 " + cat.charAt(0).toUpperCase() + cat.slice(1); 
+                select.appendChild(option);
+            });
+        }
 
-                    if (orders.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding:3rem;">No recent transactions.</td></tr>';
-                        return;
-                    }
+        // --- NEW: SALES FILTER LOGIC ---
+        function isDateInRange(isoString, rangeMode) {
+            if (!isoString) return false;
+            const rowDate = new Date(isoString);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-                    let html = '';
-                    orders.forEach(o => {
-                        const amount = parseFloat(o.total_amount).toFixed(2);
-                        html += `<tr>
-                            <td class="mono" style="font-weight:600;">#${o.exit_code}</td>
-                            <td>${o.username}</td>
-                            <td class="mono" style="color:var(--text-muted); font-size:0.9rem;">${o.date || ''}</td>
-                            <td class="mono text-primary" style="font-weight:600;">₹${amount}</td>
-                            <td class="mono">${o.total_expected_weight}g</td>
-                            <td><span class="status-badge status-${o.exit_status}">${o.exit_status.toUpperCase()}</span></td>
-                        </tr>`;
-                    });
-                    tbody.innerHTML = html;
-                } catch (e) { console.error("Polling sync error", e); }
+            if (rangeMode === 'today') {
+                return rowDate >= today;
+            } else if (rangeMode === 'week') {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay()); 
+                return rowDate >= weekStart;
+            } else if (rangeMode === 'month') {
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                return rowDate >= monthStart;
+            } else if (rangeMode === 'year') {
+                const yearStart = new Date(now.getFullYear(), 0, 1);
+                return rowDate >= yearStart;
             }
-            setInterval(pollRecentOrders, 5000);
-        </script>
-</body>
+            return true; // 'all'
+        }
 
+        function filterSalesTable() {
+            const searchTerm = document.getElementById('searchSalesInput').value.toLowerCase();
+            const timeFilter = document.getElementById('timeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            const rows = document.querySelectorAll('.sale-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const code = row.getAttribute('data-code');
+                const user = row.getAttribute('data-user');
+                const status = row.getAttribute('data-status');
+                const dateIso = row.getAttribute('data-date');
+
+                const matchesSearch = code.includes(searchTerm) || user.includes(searchTerm);
+                
+                // Alert/Recheck/Inspection usually get grouped in real-world filters
+                let matchesStatus = false;
+                if (statusFilter === 'all') matchesStatus = true;
+                else if (statusFilter === 'alert' && ['alert', 'recheck', 'inspection'].includes(status)) matchesStatus = true;
+                else if (status === statusFilter) matchesStatus = true;
+
+                const matchesTime = isDateInRange(dateIso, timeFilter);
+
+                if (matchesSearch && matchesStatus && matchesTime) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const msg = document.getElementById('noSalesMsg');
+            if(visibleCount === 0) { msg.classList.remove('hidden'); } else { msg.classList.add('hidden'); }
+        }
+
+        // --- UNIVERSAL TABLE SORTING LOGIC ---
+        let sortStates = {}; 
+        function sortTable(tableId, columnIndex, type) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            const rows = Array.from(tbody.querySelectorAll('tr')).filter(tr => tr.classList.contains('product-row') || tr.classList.contains('sale-row'));
+            
+            const sortKey = `${tableId}-${columnIndex}`;
+            if (sortStates[sortKey] === undefined) sortStates[sortKey] = true;
+            const isAscending = sortStates[sortKey];
+
+            rows.sort((a, b) => {
+                let valA, valB;
+                
+                if(type === 'num' || type === 'date') {
+                    // Fetch raw numbers/timestamps stored in data-value attributes
+                    valA = parseFloat(a.cells[columnIndex].getAttribute('data-value')) || 0;
+                    valB = parseFloat(b.cells[columnIndex].getAttribute('data-value')) || 0;
+                } else {
+                    valA = a.cells[columnIndex].innerText.toLowerCase();
+                    valB = b.cells[columnIndex].innerText.toLowerCase();
+                }
+
+                if (valA < valB) return isAscending ? -1 : 1;
+                if (valA > valB) return isAscending ? 1 : -1;
+                return 0;
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+            sortStates[sortKey] = !isAscending; // Toggle for next click
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTab = localStorage.getItem('activeAdminTab') || 'overview';
+            switchTab(null, savedTab);
+            populateCategories();
+            
+            try {
+                new Chart(document.getElementById('salesChart'), { type: 'line', data: { labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], datasets: [{ label: 'Revenue', data: [500, 800, 1200, 900, 1500, 2000, 1800], borderColor: '#2563eb', fill: true, backgroundColor: 'rgba(37,99,235,0.1)' }] } });
+            } catch(e) { console.warn("ChartJS could not load"); }
+        });
+    </script>
+</body>
 </html>

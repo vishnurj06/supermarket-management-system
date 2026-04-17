@@ -26,7 +26,6 @@ class User:
 
     @classmethod
     def create_customer(cls, username, password):
-        # We hash the password before saving it for security
         hashed_pw = generate_password_hash(password)
         conn = DB.get_connection() 
         try:
@@ -40,6 +39,22 @@ class User:
             return False
         finally:
             conn.close()
+
+    # --- NEW: Added get_all for Admin Dashboard ---
+    @staticmethod
+    def get_all():
+        conn = DB.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # FIX: Use SELECT * to ensure we fetch the email and mobile columns
+                cursor.execute('SELECT * FROM users ORDER BY id DESC')
+                return cursor.fetchall()
+        except Exception as e:
+            print(f"Error fetching users: {e}")
+            return []
+        finally:
+            conn.close()
+
 
 class Product:
     @staticmethod
@@ -95,20 +110,17 @@ class Product:
         conn = DB.get_connection()
         try:
             with conn.cursor() as cursor:
-                # Need to handle order_items referencing this product.
-                # In a real system, we'd maybe soft-delete, but for now we can either delete or delete from order_items
-                # Usually we shouldn't delete products if they are in orders. But per requirement "Delete Product", let's just delete it directly.
                 cursor.execute('DELETE FROM order_items WHERE product_id=%s', (product_id,))
                 cursor.execute('DELETE FROM products WHERE id=%s', (product_id,))
                 conn.commit()
         finally:
             conn.close()
 
+
 class Order:
     @staticmethod
     def create(user_id, total_amount, expected_weight, items):
         import datetime
-        
         conn = DB.get_connection()
         try:
             with conn.cursor() as cursor:
@@ -135,6 +147,27 @@ class Order:
         except Exception as e:
             conn.rollback()
             raise e
+        finally:
+            conn.close()
+
+    # --- NEW: Added get_all for Admin Dashboard ---
+    @staticmethod
+    def get_all():
+        conn = DB.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute('''
+                    SELECT o.id, COALESCE(u.username, 'Guest Shopper') as username, 
+                           o.total_amount, o.total_expected_weight, 
+                           o.exit_status, o.exit_code, o.date
+                    FROM orders o
+                    LEFT JOIN users u ON o.user_id = u.id
+                    ORDER BY o.date DESC
+                ''')
+                return cursor.fetchall()
+        except Exception as e:
+            print(f"Error fetching orders: {e}")
+            return []
         finally:
             conn.close()
 
@@ -179,8 +212,6 @@ class Order:
     @staticmethod
     def update_exit_status(order_id, new_status):
         print("DEBUG STATUS SENT TO DB:", new_status)
-
-   
         new_status = new_status.lower()
 
         if new_status not in ["pending", "verified", "recheck", "inspection", "alert"]:
@@ -199,7 +230,6 @@ class Order:
         conn = DB.get_connection()
         try:
             with conn.cursor() as cursor:
-                # Fetch all orders for this user, newest first
                 sql = "SELECT * FROM orders WHERE user_id = %s ORDER BY date DESC"
                 cursor.execute(sql, (user_id,))
                 return cursor.fetchall()

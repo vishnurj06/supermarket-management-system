@@ -1,6 +1,14 @@
+import sys
+import os
 import pymysql
 from werkzeug.security import generate_password_hash
-from config import Config
+from datetime import datetime, timedelta
+
+# 1. Point Python to the root folder so it can find 'app' and 'schema.sql'
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, ROOT_DIR)
+
+from app.config import Config
 
 def init_db():
     print("Connecting to MySQL server...")
@@ -13,7 +21,11 @@ def init_db():
         )
         cursor = conn.cursor()
         
-        with open('schema.sql', 'r') as f:
+        # 2. FIX: Find schema.sql in the ROOT directory
+        schema_path = os.path.join(ROOT_DIR, 'schema.sql')
+        
+        print(f"Reading schema from: {schema_path}")
+        with open(schema_path, 'r') as f:
             sql_script = f.read()
             
         statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
@@ -21,7 +33,6 @@ def init_db():
             cursor.execute(statement)
         
         conn.commit()
-        
         cursor.execute(f"USE {Config.MYSQL_DB}")
         
         admin_pw = generate_password_hash('admin123')
@@ -37,6 +48,7 @@ def init_db():
         
         try:
             cursor.executemany(users_sql, users_data)
+            print("Added default users.")
         except pymysql.err.IntegrityError:
             print("Users already exist.")
         
@@ -47,26 +59,42 @@ def init_db():
         products_data = [
             ('Artisan Sourdough', 5.99, 50, '100001', 500, '🥖', 'bakery'),
             ('Organic Avocados (2x)', 4.50, 40, '100002', 400, '🥑', 'produce'),
-            ('Almond Milk (Unsweetened)', 3.99, 100, '100003', 1050, '🥛', 'dairy'),
-            ('Free-Range Eggs (Dozen)', 6.49, 30, '100004', 650, '🥚', 'dairy'),
-            ('Fairtrade Coffee Beans', 12.99, 60, '100005', 250, '☕', 'pantry'),
-            ('Premium Sea Salt', 4.25, 20, '100006', 500, '🧂', 'pantry'),
-            ('Grass-fed Beef Steak', 15.50, 15, '100007', 450, '🥩', 'meat'),
-            ('Cherry Tomatoes', 3.49, 25, '100008', 300, '🍅', 'produce'),
-            ('Greek Yogurt', 5.99, 45, '100009', 1000, '🥣', 'dairy'),
-            ('Dark Chocolate (70%)', 3.50, 80, '100010', 100, '🍫', 'snacks')
+            ('Almond Milk', 3.99, 100, '100003', 1050, '🥛', 'dairy'),
+            ('Hide And Seek Biscuit', 42.00, 3, '100004', 120, '🍪', 'snacks'),
+            ('Coca-Cola, 750ml', 32.00, 18, '100005', 750, '🥤', 'beverages')
         ]
         
         try:
             cursor.executemany(products_sql, products_data)
+            print("Added default products.")
         except pymysql.err.IntegrityError:
             print("Products already exist.")
             
+        # 3. FIX: Raw PyMySQL inserts for Dummy Orders
+        print("Inserting dummy sales data...")
+        try:
+            now = datetime.now()
+            orders_sql = """
+                INSERT INTO orders (exit_code, username, total_amount, exit_status, total_expected_weight, date) 
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            orders_data = [
+                ('SM-2026-0001', 'customer', 1250.50, 'verified', 2000, now - timedelta(days=1)),
+                ('SM-2026-0002', 'customer', 450.00, 'pending', 800, now),
+                ('SM-2026-0003', 'customer', 890.25, 'verified', 1500, now - timedelta(days=2))
+            ]
+            cursor.executemany(orders_sql, orders_data)
+            print("Added dummy orders.")
+        except Exception as e:
+            print(f"Skipped dummy orders: {e}")
+
         conn.commit()
-        print("Database initialized successfully!")
+        print("✅ Database initialized successfully with test data!")
         
     except pymysql.err.OperationalError as e:
-        print(f"Failed to connect to MySQL: {e}")
+        print(f"❌ Failed to connect to MySQL: {e}")
+    except FileNotFoundError:
+        print(f"❌ Could not find schema.sql at {schema_path}. Please make sure it is in the main folder!")
     finally:
         if 'conn' in locals() and conn.open:
             conn.close()
