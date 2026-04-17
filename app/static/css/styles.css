@@ -798,3 +798,102 @@ select:focus {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+
+/* --- NEW: Profile Dropdown --- */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-btn {
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.profile-btn:hover { background: #e2e8f0; }
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 110%;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: var(--shadow-lg);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.profile-menu:hover .dropdown-content { display: block; }
+
+.dropdown-item {
+    padding: 0.8rem 1.2rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover { background: #f8fafc; color: var(--primary); }
+.dropdown-item.text-danger { color: var(--danger); border-bottom: none;}
+.dropdown-item.text-danger:hover { background: #fef2f2; color: var(--danger-hover); }
+
+/* --- NEW: Budget Progress Bar --- */
+.budget-tracker {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.budget-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+
+.progress-bg {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--secondary);
+    border-radius: 999px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Changes to orange when near budget, red when over */
+.progress-fill.warning { background: var(--warning); }
+.progress-fill.danger { background: var(--danger); }

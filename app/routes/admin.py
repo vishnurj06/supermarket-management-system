@@ -3,7 +3,7 @@ import time
 import qrcode
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, current_app
-from app.models import Product, Order, User
+from app.models import Product, Order, User, DB
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -61,6 +61,29 @@ def admin_dashboard():
 
     low_stock_items = [p for p in products if p.get('stock', 0) < 10]
     total_products = len(products)
+
+    # ... (your existing stats and low_stock code) ...
+
+    # NEW: Fetch Support Tickets
+    tickets = []
+    conn = DB.get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT * FROM support_tickets ORDER BY created_at DESC')
+            tickets = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching tickets: {e}")
+    finally:
+        conn.close()
+        
+    return render_template('admin.html', 
+                           products=products, 
+                           orders=orders, 
+                           users=users, 
+                           total_products=total_products, 
+                           low_stock_items=low_stock_items,
+                           stats=stats,
+                           tickets=tickets) # <-- Add tickets here!
     
     return render_template('admin.html', 
                            products=products, 
@@ -139,3 +162,21 @@ def view_qr(product_id):
         </div>
     </div>
     """
+
+@admin_bp.route('/resolve_ticket/<int:ticket_id>', methods=['POST'])
+def resolve_ticket(ticket_id):
+    if session.get('role') != 'admin': 
+        return redirect(url_for('auth.login'))
+        
+    conn = DB.get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE support_tickets SET status='Resolved' WHERE id=%s", (ticket_id,))
+            conn.commit()
+        flash('Ticket marked as resolved.', 'success')
+    except Exception as e: 
+        flash(f'Error resolving ticket: {str(e)}', 'error')
+    finally:
+        conn.close()
+        
+    return redirect(url_for('admin.admin_dashboard'))

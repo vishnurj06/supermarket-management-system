@@ -69,6 +69,15 @@
             <a class="nav-link" onclick="switchTab(event, 'overview')">📊 Overview</a>
             <a class="nav-link" onclick="switchTab(event, 'inventory')">📦 Inventory</a>
             <a class="nav-link" onclick="switchTab(event, 'sales')">💰 Sales History</a>
+            
+            {% set open_tickets = tickets|selectattr("status", "equalto", "Open")|list|length %}
+            <a class="nav-link" onclick="switchTab(event, 'inbox')">
+                📥 Support Inbox 
+                {% if open_tickets > 0 %}
+                <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 99px; font-size: 0.7rem; margin-left: auto;">{{ open_tickets }}</span>
+                {% endif %}
+            </a>
+            
             <a class="nav-link" onclick="switchTab(event, 'customers')">👥 Customers</a>
         </nav>
         <div style="padding:1.5rem;"><a href="/logout" style="color:white; text-decoration:none; opacity:0.7;">Logout</a></div>
@@ -303,6 +312,64 @@
                 </div>
             </div>
         </section>
+
+        <section id="inbox" class="tab-content hidden">
+            <h2 style="margin-top:0; font-size: 1.5rem; color: #1e293b; margin-bottom: 1rem;">Customer Support Inbox</h2>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID & Date</th>
+                            <th>Customer</th>
+                            <th>Issue Type</th>
+                            <th>Message</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tickets %}
+                        <tr style="background: {{ '#f8fafc' if t.status == 'Resolved' else 'white' }}; opacity: {{ '0.7' if t.status == 'Resolved' else '1' }};">
+                            <td style="color:#64748b; font-size: 0.85rem;">
+                                <strong>#{{ t.id }}</strong><br>
+                                {{ t.created_at.strftime('%b %d, %H:%M') if t.created_at else 'Unknown' }}
+                            </td>
+                            <td style="font-weight:600; color:#1e293b;">{{ t.username }}</td>
+                            <td><span style="background:#e0e7ff; color:#3730a3; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight: 600;">{{ t.issue_type }}</span></td>
+                            <td style="max-width: 300px; white-space: normal; line-height: 1.4; color: #475569; font-size: 0.9rem;">
+                                {{ t.message }}
+                            </td>
+                            <td>
+                                {% if t.status == 'Open' %}
+                                    <span style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight: 600;">Open</span>
+                                {% else %}
+                                    <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight: 600;">Resolved</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if t.status == 'Open' %}
+                                <form action="{{ url_for('admin.resolve_ticket', ticket_id=t.id) }}" method="POST" style="margin:0;">
+                                    <button type="submit" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: 0.2s;">
+                                        ✔ Mark Resolved
+                                    </button>
+                                </form>
+                                {% else %}
+                                    <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 500;">Closed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" style="padding: 3rem; text-align: center; color: #64748b; font-size: 1.1rem;">
+                            <div style="font-size: 2.5rem; margin-bottom: 10px;">🎉</div>
+                            Inbox zero! No active support tickets.
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
     </main>
 
     <div id="product-modal" class="modal hidden">

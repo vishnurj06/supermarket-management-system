@@ -483,3 +483,102 @@ async function handleSuccessfulScan(scannedText) {
         scanBtn.style.background = 'var(--text-main)';
     }, 2000);
 }
+
+
+// --- Modal Visibility Controls ---
+function openProfileModal() { document.getElementById('profile-modal').classList.remove('hidden'); }
+function openSupportModal() { document.getElementById('support-modal').classList.remove('hidden'); }
+function closeAppModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+
+// --- Profile Unlock Logic ---
+function unlockProfile() {
+    // 1. Remove the 'disabled' attribute from all inputs
+    document.querySelectorAll('.profile-input').forEach(input => input.disabled = false);
+    
+    // 2. Show the password box and swap the buttons
+    document.getElementById('profile-password-group').classList.remove('hidden');
+    document.getElementById('btn-unlock-profile').classList.add('hidden');
+    document.getElementById('btn-save-profile').classList.remove('hidden');
+    
+    // 3. Focus the first input
+    document.getElementById('prof-name').focus();
+}
+
+// --- Real AJAX Save Profile ---
+async function saveProfile() {
+    const password = document.getElementById('prof-password').value;
+    if (!password) {
+        alert("Password is required to save changes.");
+        return;
+    }
+
+    const payload = {
+        full_name: document.getElementById('prof-name').value,
+        dob: document.getElementById('prof-dob').value,
+        email: document.getElementById('prof-email').value,
+        mobile: document.getElementById('prof-mobile').value,
+        gender: document.getElementById('prof-gender').value,
+        wants_offers: document.getElementById('prof-offers').checked,
+        password: password
+    };
+
+    try {
+        const response = await fetch('/update_profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert("Profile successfully updated!");
+            
+            // Re-lock the UI
+            document.querySelectorAll('.profile-input').forEach(input => input.disabled = true);
+            document.getElementById('profile-password-group').classList.add('hidden');
+            document.getElementById('btn-unlock-profile').classList.remove('hidden');
+            document.getElementById('btn-save-profile').classList.add('hidden');
+            document.getElementById('prof-password').value = ''; // clear password
+            
+            closeAppModal('profile-modal');
+        } else {
+            alert("Update failed: " + result.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("A network error occurred.");
+    }
+}
+
+// --- Real AJAX Submit Support ---
+async function submitSupport() {
+    const type = document.getElementById('support-type').value;
+    const msg = document.getElementById('support-message').value;
+    
+    if (!msg.trim()) {
+        alert("Please enter a message before submitting.");
+        return;
+    }
+    
+    try {
+        const response = await fetch('/submit_support', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: type, message: msg })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert("Message sent successfully! Our team will review it.");
+            document.getElementById('support-message').value = ''; // Clear box
+            closeAppModal('support-modal');
+        } else {
+            alert("Failed to send: " + result.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("A network error occurred.");
+    }
+}
