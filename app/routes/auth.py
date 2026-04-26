@@ -37,9 +37,20 @@ def login():
                 session.clear()
                 return redirect(url_for('auth.login'))
                 
-        return render_template('login.html', error="Invalid credentials")
+        # Detect portal role so the template renders the correct UI
+        portal_role = 'customer'
+        if 'admin' in current_app.blueprints and 'customer' not in current_app.blueprints:
+            portal_role = 'admin'
+        elif 'staff' in current_app.blueprints and 'customer' not in current_app.blueprints:
+            portal_role = 'staff'
+        return render_template('login.html', error="Invalid credentials", role=portal_role)
             
-    return render_template('login.html')
+    portal_role = 'customer'
+    if 'admin' in current_app.blueprints and 'customer' not in current_app.blueprints:
+        portal_role = 'admin'
+    elif 'staff' in current_app.blueprints and 'customer' not in current_app.blueprints:
+        portal_role = 'staff'
+    return render_template('login.html', role=portal_role)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -81,17 +92,4 @@ def register():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('auth.login'))
-
-@auth_bp.route('/guest_start')
-def guest_start():
-    if 'customer' not in current_app.blueprints:
-        flash("Guest checkout is only available on the Customer Portal.", "error")
-        return redirect(url_for('auth.login'))
-        
-    import uuid
-    session.clear()
-    session['guest_id'] = str(uuid.uuid4())[:8]
-    session['role'] = 'customer'
-    session['username'] = 'Guest Shopper'
-    return redirect(url_for('customer.customer_view'))
+    return redirect(url_for('auth.login'))

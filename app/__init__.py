@@ -50,8 +50,8 @@ def create_app(role_filter=None):
     # --- UPDATED MIDDLEWARE ---
     @app.before_request
     def require_login():
-        allowed_routes = ['auth.login', 'auth.register', 'static', 'auth.guest_start']
-        if request.endpoint not in allowed_routes and 'user_id' not in session and 'guest_id' not in session:
+        allowed_routes = ['auth.login', 'auth.register', 'static']
+        if request.endpoint not in allowed_routes and 'user_id' not in session:
             return redirect(url_for('auth.login'))
 
     return app

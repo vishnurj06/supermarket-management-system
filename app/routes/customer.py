@@ -7,7 +7,7 @@ customer_bp = Blueprint('customer', __name__)
 @customer_bp.route('/customer')
 def customer_view():
     if 'role' not in session or session.get('role') == 'customer':
-        if 'guest_id' not in session and 'user_id' not in session:
+        if 'user_id' not in session:
             return redirect(url_for('auth.login'))
             
         # NEW: Fetch the user's profile and support tickets from the database

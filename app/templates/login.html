@@ -2,22 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SmartMart Enterprise</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+{% if role in ['admin', 'staff'] %}
+{# ============================================================ #}
+{# ===  LEGACY UI — PRESERVED EXACTLY FOR ADMIN / STAFF     === #}
+{# ============================================================ #}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root {
             --primary: #4f46e5;
             --primary-hover: #4338ca;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --bg-body: #e2e8f0; /* Darker desktop background */
+            --bg-body: #e2e8f0;
             --input-bg: #f8fafc;
         }
-
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-body);
             display: flex;
@@ -25,234 +29,76 @@
             align-items: center;
             min-height: 100vh;
         }
-
-        /* --- THE MOBILE FRAME --- */
         .app-container {
-            width: 100%;
-            max-width: 400px;
-            background: #0f172a; /* Deep dark blue top section */
+            width: 100%; max-width: 400px;
+            background: #0f172a;
             position: relative;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
-
-        /* Simulates a phone screen on desktop */
         @media (min-width: 401px) {
-            .app-container {
-                height: 850px;
-                max-height: 90vh;
-                border-radius: 40px;
-                border: 8px solid #ffffff;
-            }
+            .app-container { height: 850px; max-height: 90vh; border-radius: 40px; border: 8px solid #ffffff; }
         }
-
         @media (max-width: 400px) {
-            .app-container {
-                height: 100vh;
-                border-radius: 0;
-            }
+            .app-container { height: 100vh; border-radius: 0; }
         }
-
-        /* --- TOP BRANDING SECTION --- */
         .brand-header {
-            padding: 4rem 2rem 5rem 2rem;
-            text-align: center;
-            color: white;
-            position: relative;
+            padding: 4rem 2rem 5rem 2rem; text-align: center; color: white; position: relative;
         }
-
-        /* Subtle background glow from the Dribbble shots */
         .brand-header::before {
-            content: '';
-            position: absolute;
-            top: -50px;
-            left: -50px;
-            width: 250px;
-            height: 250px;
+            content: ''; position: absolute; top: -50px; left: -50px;
+            width: 250px; height: 250px;
             background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, transparent 70%);
-            border-radius: 50%;
-            z-index: 0;
+            border-radius: 50%; z-index: 0;
         }
-
-        .logo-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            position: relative;
-            z-index: 1;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .brand-title {
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin: 0 0 0.5rem 0;
-            letter-spacing: -1px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .brand-subtitle {
-            color: #94a3b8;
-            font-size: 0.95rem;
-            margin: 0;
-            font-weight: 400;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* --- BOTTOM OVERLAPPING CARD --- */
+        .logo-icon { font-size: 4rem; margin-bottom: 1rem; position: relative; z-index: 1; animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .brand-title { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -1px; position: relative; z-index: 1; }
+        .brand-subtitle { color: #94a3b8; font-size: 0.95rem; margin: 0; font-weight: 400; position: relative; z-index: 1; }
         .form-sheet {
-            background: #ffffff;
-            flex: 1;
-            border-radius: 40px 40px 0 0;
-            padding: 2.5rem 2rem;
-            margin-top: -30px; /* Pulls it up over the dark background */
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
+            background: #ffffff; flex: 1; border-radius: 40px 40px 0 0;
+            padding: 2.5rem 2rem; margin-top: -30px; position: relative; z-index: 10;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
         }
-
-        .sheet-handle {
-            width: 40px;
-            height: 5px;
-            background: #e2e8f0;
-            border-radius: 10px;
-            margin: 0 auto 2rem auto;
-        }
-
-        .welcome-text {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--text-main);
-            margin: 0 0 0.5rem 0;
-            letter-spacing: -0.5px;
-        }
-
-        .instruction-text {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin: 0 0 2rem 0;
-        }
-
-        /* --- INPUT FIELDS --- */
-        .input-wrapper {
-            position: relative;
-            margin-bottom: 1.2rem;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1.2rem;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.2rem;
-            color: #94a3b8;
-        }
-
+        .sheet-handle { width: 40px; height: 5px; background: #e2e8f0; border-radius: 10px; margin: 0 auto 2rem auto; }
+        .welcome-text { font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.5rem 0; letter-spacing: -0.5px; }
+        .instruction-text { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 2rem 0; }
+        .input-wrapper { position: relative; margin-bottom: 1.2rem; }
+        .input-icon { position: absolute; left: 1.2rem; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #94a3b8; }
         .fat-input {
-            width: 100%;
-            padding: 1.2rem 1.2rem 1.2rem 3rem;
-            background: var(--input-bg);
-            border: 2px solid transparent;
-            border-radius: 20px;
-            font-size: 1rem;
-            font-family: inherit;
-            color: var(--text-main);
-            font-weight: 500;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
+            width: 100%; padding: 1.2rem 1.2rem 1.2rem 3rem;
+            background: var(--input-bg); border: 2px solid transparent; border-radius: 20px;
+            font-size: 1rem; font-family: inherit; color: var(--text-main); font-weight: 500;
+            box-sizing: border-box; transition: all 0.3s ease;
         }
-
-        .fat-input:focus {
-            outline: none;
-            background: #ffffff;
-            border-color: var(--primary);
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);
-        }
-
-        .fat-input::placeholder {
-            color: #cbd5e1;
-            font-weight: 500;
-        }
-
-        .forgot-pass {
-            display: block;
-            text-align: right;
-            color: var(--primary);
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            margin-bottom: 2rem;
-            margin-top: -0.5rem;
-        }
-
-        /* --- PRIMARY BUTTON --- */
+        .fat-input:focus { outline: none; background: #ffffff; border-color: var(--primary); box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1); }
+        .fat-input::placeholder { color: #cbd5e1; font-weight: 500; }
+        .forgot-pass { display: block; text-align: right; color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none; margin-bottom: 2rem; margin-top: -0.5rem; }
         .btn-login {
-            width: 100%;
-            padding: 1.2rem;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 100px; /* Full pill shape */
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
-            margin-top: auto; /* Pushes button to bottom of form */
+            width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none;
+            border-radius: 100px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25); margin-top: auto;
         }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            background: var(--primary-hover);
-            box-shadow: 0 12px 25px rgba(79, 70, 229, 0.35);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        /* --- FLASH MESSAGES --- */
-        .flash-msg {
-            padding: 1rem;
-            border-radius: 16px;
-            margin-bottom: 1.5rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-align: center;
-        }
+        .btn-login:hover { transform: translateY(-2px); background: var(--primary-hover); box-shadow: 0 12px 25px rgba(79, 70, 229, 0.35); }
+        .btn-login:active { transform: translateY(0); }
+        .flash-msg { padding: 1rem; border-radius: 16px; margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 600; text-align: center; }
         .flash-error { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
         .flash-success { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; }
-
     </style>
 </head>
 <body>
-
     <div class="app-container">
-        
         <div class="brand-header">
             <div class="logo-icon">🛒</div>
             <h1 class="brand-title">SmartMart</h1>
             <p class="brand-subtitle">Control everything in one place.</p>
         </div>
-
         <div class="form-sheet">
             <div class="sheet-handle"></div>
-            
             <h2 class="welcome-text">Log in</h2>
             <p class="instruction-text">Sign in to enjoy the best experience.</p>
-
             <form action="/login" method="POST" style="display: flex; flex-direction: column; flex: 1;">
-                
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -262,24 +108,1113 @@
                         {% endfor %}
                     {% endif %}
                 {% endwith %}
-
                 <div class="input-wrapper">
                     <span class="input-icon">👤</span>
                     <input type="text" id="username" name="username" class="fat-input" placeholder="Username or ID" required autocomplete="off">
                 </div>
-
                 <div class="input-wrapper">
                     <span class="input-icon">🔒</span>
                     <input type="password" id="password" name="password" class="fat-input" placeholder="Password" required>
                 </div>
-
                 <a href="#" class="forgot-pass">Forgot Password?</a>
-
                 <button type="submit" class="btn-login">Login</button>
             </form>
         </div>
-
     </div>
+</body>
+</html>
+
+{% else %}
+{# ============================================================ #}
+{# ===  BRAND NEW CUSTOMER UI — FULL-PAGE SCROLLING PARALLAX === #}
+{# ============================================================ #}
+    <style>
+        /* ── Reset & Base ───────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --clr-bg:       #06080f;
+            --clr-surface:  #0d1117;
+            --clr-card:     #131921;
+            --clr-border:   rgba(255,255,255,0.07);
+            --clr-accent:   #5b6cf5;
+            --clr-accent2:  #9b6cf5;
+            --clr-text:     #f0f4ff;
+            --clr-muted:    #7b8aab;
+            --clr-input-bg: rgba(255,255,255,0.04);
+            --bezier:       cubic-bezier(0.23, 1, 0.32, 1);
+            --r-card:       28px;
+            --r-input:      18px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--clr-bg);
+            color: var(--clr-text);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ── Scrollbar ─────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--clr-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--clr-accent); border-radius: 99px; }
+
+        /* ── Ambient orbs ──────────────────────────────────────── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(100px);
+            opacity: 0.18;
+            z-index: 0;
+            animation: orbDrift 18s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 700px; height: 700px; top: -200px; left: -200px; background: var(--clr-accent); animation-delay: 0s; }
+        .orb-2 { width: 500px; height: 500px; bottom: 5vh; right: -150px; background: var(--clr-accent2); animation-delay: -6s; }
+        .orb-3 { width: 350px; height: 350px; top: 55vh; left: 30vw; background: #3de8c8; opacity: 0.08; animation-delay: -12s; }
+        @keyframes orbDrift {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(40px, 30px) scale(1.08); }
+        }
+
+        /* ── Noise texture overlay ─────────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.4;
+        }
+
+        /* ── Section: Hero ─────────────────────────────────────── */
+        #hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* Floating grid lines */
+        #hero::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(91,108,245,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(91,108,245,0.06) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 99px;
+            border: 1px solid rgba(91,108,245,0.35);
+            background: rgba(91,108,245,0.1);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #a5b4fc;
+            margin-bottom: 2.5rem;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: heroReveal 0.9s var(--bezier) 0.1s forwards;
+        }
+        .hero-badge-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #6cf57a;
+            box-shadow: 0 0 6px #6cf57a;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .hero-logo {
+            font-size: 5rem;
+            line-height: 1;
+            margin-bottom: 1.5rem;
+            display: block;
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+            animation: heroReveal 1s var(--bezier) 0.25s forwards;
+            filter: drop-shadow(0 0 40px rgba(91,108,245,0.5));
+        }
+
+        .hero-headline {
+            font-size: clamp(3rem, 7vw, 6.5rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: heroReveal 1s var(--bezier) 0.4s forwards;
+        }
+        .hero-headline .accent-word {
+            background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            max-width: 540px;
+            font-size: clamp(1rem, 2vw, 1.15rem);
+            color: var(--clr-muted);
+            font-weight: 400;
+            margin-bottom: 3rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: heroReveal 1s var(--bezier) 0.55s forwards;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: heroReveal 1s var(--bezier) 0.7s forwards;
+        }
+
+        .btn-primary {
+            padding: 0.9rem 2.2rem;
+            background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
+            color: #fff;
+            border: none;
+            border-radius: 99px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 8px 32px rgba(91,108,245,0.35);
+            transition: transform 0.25s var(--bezier), box-shadow 0.25s var(--bezier);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.12);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(91,108,245,0.45); }
+        .btn-primary:hover::after { opacity: 1; }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-ghost {
+            padding: 0.9rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            color: var(--clr-text);
+            border: 1px solid var(--clr-border);
+            border-radius: 99px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(8px);
+            transition: transform 0.25s var(--bezier), background 0.25s;
+        }
+        .btn-ghost:hover { transform: translateY(-3px); background: rgba(255,255,255,0.09); }
+
+        @keyframes heroReveal {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Scroll indicator */
+        .scroll-hint {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--clr-muted);
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: heroReveal 1s var(--bezier) 1.2s forwards;
+        }
+        .scroll-arrow {
+            width: 28px; height: 46px;
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 99px;
+            display: flex;
+            justify-content: center;
+            padding-top: 8px;
+        }
+        .scroll-arrow::before {
+            content: '';
+            width: 4px; height: 10px;
+            background: var(--clr-accent);
+            border-radius: 99px;
+            animation: scrollBounce 1.6s ease-in-out infinite;
+        }
+        @keyframes scrollBounce {
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            80% { transform: translateY(14px); opacity: 0; }
+        }
+
+        /* ── Section: Stats ticker ─────────────────────────────── */
+        #stats-strip {
+            position: relative;
+            z-index: 2;
+            border-top: 1px solid var(--clr-border);
+            border-bottom: 1px solid var(--clr-border);
+            padding: 2rem 0;
+            overflow: hidden;
+        }
+        .stats-inner {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0 4rem;
+            padding: 0 2rem;
+        }
+        .stat-item { text-align: center; }
+        .stat-num {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.04em;
+        }
+        .stat-label { font-size: 0.82rem; color: var(--clr-muted); font-weight: 500; margin-top: 0.2rem; }
+
+        /* ── Section: Features ─────────────────────────────────── */
+        #features {
+            position: relative;
+            z-index: 2;
+            padding: 8rem 2rem;
+        }
+        .section-label {
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--clr-accent);
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            text-align: center;
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        .section-sub {
+            text-align: center;
+            color: var(--clr-muted);
+            font-size: 1rem;
+            max-width: 480px;
+            margin: 0 auto 4rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .feat-card {
+            background: var(--clr-card);
+            border: 1px solid var(--clr-border);
+            border-radius: var(--r-card);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s var(--bezier), box-shadow 0.4s var(--bezier);
+            will-change: transform;
+        }
+        .feat-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(91,108,245,0.4), transparent);
+        }
+        .feat-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(0,0,0,0.4); }
+        .feat-icon {
+            font-size: 2rem;
+            margin-bottom: 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            background: rgba(91,108,245,0.12);
+            border: 1px solid rgba(91,108,245,0.2);
+        }
+        .feat-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .feat-desc { font-size: 0.88rem; color: var(--clr-muted); line-height: 1.65; }
+
+        /* Reveal on scroll */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.7s var(--bezier), transform 0.7s var(--bezier);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* ── Section: Login Form ────────────────────────────────── */
+        #login-section {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 1.5rem;
+        }
+
+        /* Large decorative rings behind the form */
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(91,108,245,0.12);
+            pointer-events: none;
+        }
+        .ring-1 { width: 600px; height: 600px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+        .ring-2 { width: 900px; height: 900px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+        .ring-3 { width: 1200px; height: 1200px; top: 50%; left: 50%; transform: translate(-50%,-50%); opacity: 0.5; }
+
+        .login-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            max-width: 1060px;
+            width: 100%;
+            gap: 5rem;
+            align-items: center;
+            position: relative;
+        }
+        @media (max-width: 820px) {
+            .login-layout { grid-template-columns: 1fr; gap: 3rem; }
+            .login-left { text-align: center; }
+        }
+
+        /* — Left panel: copy — */
+        .login-left .eyebrow {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--clr-accent);
+            margin-bottom: 1.2rem;
+        }
+        .login-left h2 {
+            font-size: clamp(2.2rem, 4vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1.08;
+            margin-bottom: 1.4rem;
+        }
+        .login-left p {
+            color: var(--clr-muted);
+            font-size: 1.02rem;
+            margin-bottom: 2.5rem;
+            max-width: 380px;
+        }
+
+        /* Perks list */
+        .perks { list-style: none; display: flex; flex-direction: column; gap: 0.9rem; }
+        .perk-item {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-size: 0.95rem;
+            color: #c8d0e8;
+        }
+        .perk-check {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: rgba(91,108,245,0.18);
+            border: 1px solid rgba(91,108,245,0.35);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem;
+            flex-shrink: 0;
+        }
+
+        /* — Right panel: card form — */
+        .form-card {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 32px;
+            padding: 3rem 2.8rem;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.04) inset,
+                0 40px 80px rgba(0,0,0,0.6),
+                0 0 120px rgba(91,108,245,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .form-card::before {
+            content: '';
+            position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        }
+
+        .card-header { margin-bottom: 2rem; }
+        .card-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.8rem;
+            display: block;
+            filter: drop-shadow(0 0 20px rgba(91,108,245,0.5));
+        }
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.3rem;
+        }
+        .card-sub { color: var(--clr-muted); font-size: 0.9rem; }
+
+        /* Tab row */
+        .tab-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.04);
+            border-radius: 14px;
+            padding: 0.3rem;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 0.65rem;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s var(--bezier);
+            background: transparent;
+            color: var(--clr-muted);
+        }
+        .tab-btn.active {
+            background: rgba(91,108,245,0.25);
+            color: #a5b4fc;
+            box-shadow: 0 2px 10px rgba(91,108,245,0.2);
+        }
+
+        /* Input group */
+        .field { margin-bottom: 1.2rem; }
+        .field-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--clr-muted);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.03em;
+        }
+        .field-wrap { position: relative; }
+        .field-icon {
+            position: absolute; left: 1rem; top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+            pointer-events: none;
+            color: var(--clr-muted);
+            transition: color 0.2s;
+        }
+        .field-input {
+            width: 100%;
+            padding: 0.95rem 1rem 0.95rem 2.9rem;
+            background: var(--clr-input-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--r-input);
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--clr-text);
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+        }
+        .field-input::placeholder { color: rgba(255,255,255,0.2); }
+        .field-input:focus {
+            border-color: rgba(91,108,245,0.6);
+            background: rgba(91,108,245,0.06);
+            box-shadow: 0 0 0 3px rgba(91,108,245,0.12), 0 4px 16px rgba(91,108,245,0.06);
+        }
+        .field-wrap:focus-within .field-icon { color: #a5b4fc; }
+
+        /* Password toggle */
+        .pwd-toggle {
+            position: absolute; right: 1rem; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            cursor: pointer; color: var(--clr-muted);
+            font-size: 1rem;
+            transition: color 0.2s;
+            padding: 0;
+        }
+        .pwd-toggle:hover { color: var(--clr-text); }
+
+        /* Forgot + flash row */
+        .form-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.4rem;
+        }
+        .remember-label {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.82rem; color: var(--clr-muted); cursor: pointer;
+        }
+        .remember-label input { accent-color: var(--clr-accent); }
+        .forgot-link {
+            font-size: 0.82rem;
+            color: #a5b4fc;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .forgot-link:hover { color: #fff; }
+
+        /* Submit button */
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--clr-accent) 0%, var(--clr-accent2) 100%);
+            color: #fff;
+            border: none;
+            border-radius: 99px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            box-shadow: 0 8px 30px rgba(91,108,245,0.4);
+            transition: transform 0.25s var(--bezier), box-shadow 0.25s var(--bezier);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .btn-submit::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(rgba(255,255,255,0.15), transparent);
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(91,108,245,0.5); }
+        .btn-submit:active { transform: translateY(0); }
+
+        /* Flash messages */
+        .flash-box {
+            padding: 0.9rem 1rem;
+            border-radius: 14px;
+            margin-bottom: 1.2rem;
+            font-size: 0.84rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .flash-box.flash-error { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+        .flash-box.flash-success { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+
+        /* Register link */
+        .form-footer {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--clr-muted);
+        }
+        .form-footer a {
+            color: #a5b4fc;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .form-footer a:hover { color: #fff; }
+
+        /* ── Section: Footer ────────────────────────────────────── */
+        #footer {
+            position: relative;
+            z-index: 2;
+            border-top: 1px solid var(--clr-border);
+            padding: 2rem 2rem;
+            text-align: center;
+            color: var(--clr-muted);
+            font-size: 0.82rem;
+        }
+        #footer span { color: var(--clr-accent); font-weight: 600; }
+
+        /* ── Parallax layer containers ─────────────────────────── */
+        .parallax-layer { will-change: transform; }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .form-card { padding: 2rem 1.5rem; border-radius: 24px; }
+            .hero-headline { font-size: 2.6rem; }
+            .stats-inner { gap: 1.5rem 2rem; }
+            .stat-num { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient background orbs -->
+    <div class="orb orb-1" aria-hidden="true"></div>
+    <div class="orb orb-2" aria-hidden="true"></div>
+    <div class="orb orb-3" aria-hidden="true"></div>
+
+    <!-- ═══════════ SECTION 1: HERO ═══════════ -->
+    <section id="hero">
+        <div class="parallax-layer" id="heroContent">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                Now live &mdash; SmartMart 2.0
+            </div>
+            <span class="hero-logo">🛒</span>
+            <h1 class="hero-headline">
+                Shop <span class="accent-word">Smarter,</span><br>
+                Live Better.
+            </h1>
+            <p class="hero-sub">
+                Your intelligent supermarket experience. Browse, scan, and checkout in seconds — anytime, anywhere.
+            </p>
+            <div class="hero-cta-group">
+                <a href="#login-section" class="btn-primary">
+                    Sign In &nbsp;→
+                </a>
+                <a href="#login-section" class="btn-ghost" data-tab="register">
+                    Create account
+                </a>
+            </div>
+        </div>
+
+        <div class="scroll-hint" aria-hidden="true">
+            <div class="scroll-arrow"></div>
+            <span>Scroll</span>
+        </div>
+    </section>
+
+    <!-- ═══════════ SECTION 2: STATS STRIP ═══════════ -->
+    <div id="stats-strip">
+        <div class="stats-inner">
+            <div class="stat-item reveal">
+                <div class="stat-num">50K+</div>
+                <div class="stat-label">Happy Customers</div>
+            </div>
+            <div class="stat-item reveal reveal-delay-1">
+                <div class="stat-num">2M+</div>
+                <div class="stat-label">Orders Processed</div>
+            </div>
+            <div class="stat-item reveal reveal-delay-2">
+                <div class="stat-num">99.9%</div>
+                <div class="stat-label">Uptime SLA</div>
+            </div>
+            <div class="stat-item reveal reveal-delay-3">
+                <div class="stat-num">4.9★</div>
+                <div class="stat-label">Customer Rating</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ SECTION 3: FEATURES ═══════════ -->
+    <section id="features">
+        <p class="section-label reveal">Why SmartMart?</p>
+        <h2 class="section-title reveal reveal-delay-1">Everything you need,<br>nothing you don't.</h2>
+        <p class="section-sub reveal reveal-delay-2">Designed from the ground up for modern shoppers who value speed, clarity, and control.</p>
+
+        <div class="features-grid">
+            <div class="feat-card reveal reveal-delay-1">
+                <div class="feat-icon">⚡</div>
+                <div class="feat-name">Instant Checkout</div>
+                <div class="feat-desc">Scan barcodes directly from your device camera and skip the queues entirely.</div>
+            </div>
+            <div class="feat-card reveal reveal-delay-2">
+                <div class="feat-icon">🔐</div>
+                <div class="feat-name">Secure by Design</div>
+                <div class="feat-desc">End-to-end encrypted sessions and Werkzeug-grade password hashing keep you safe.</div>
+            </div>
+            <div class="feat-card reveal reveal-delay-3">
+                <div class="feat-icon">📦</div>
+                <div class="feat-name">Live Inventory</div>
+                <div class="feat-desc">Real-time stock levels updated the moment an order is placed — no surprises.</div>
+            </div>
+            <div class="feat-card reveal reveal-delay-4">
+                <div class="feat-icon">🎟️</div>
+                <div class="feat-name">Smart Exit Codes</div>
+                <div class="feat-desc">Unique QR exit codes with weight validation for a seamless, theft-proof exit.</div>
+            </div>
+            <div class="feat-card reveal reveal-delay-1">
+                <div class="feat-icon">🧾</div>
+                <div class="feat-name">Order History</div>
+                <div class="feat-desc">Full purchase history at your fingertips — review, reorder, or raise a support ticket.</div>
+            </div>
+            <div class="feat-card reveal reveal-delay-2">
+                <div class="feat-icon">💬</div>
+                <div class="feat-name">Support Center</div>
+                <div class="feat-desc">One-tap tickets go directly to admin for rapid resolution — no phone menus.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ SECTION 4: LOGIN FORM ═══════════ -->
+    <section id="login-section">
+        <!-- Decorative rings -->
+        <div class="ring ring-1" aria-hidden="true"></div>
+        <div class="ring ring-2" aria-hidden="true"></div>
+        <div class="ring ring-3" aria-hidden="true"></div>
+
+        <div class="login-layout">
+
+            <!-- Left: selling copy -->
+            <div class="login-left reveal">
+                <p class="eyebrow">Welcome back</p>
+                <h2>Sign in to your <span class="accent-word" style="background:linear-gradient(135deg,#5b6cf5,#9b6cf5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">SmartMart</span> account.</h2>
+                <p>Access your orders, scan to cart, manage your profile and enjoy personalised offers — all from one place.</p>
+                <ul class="perks">
+                    <li class="perk-item">
+                        <span class="perk-check">✓</span>
+                        AI-powered product recommendations
+                    </li>
+                    <li class="perk-item">
+                        <span class="perk-check">✓</span>
+                        Mobile barcode scanner in-browser
+                    </li>
+                    <li class="perk-item">
+                        <span class="perk-check">✓</span>
+                        Instant digital receipts & exit QR
+                    </li>
+
+                </ul>
+            </div>
+
+            <!-- Right: form card -->
+            <div class="form-card reveal reveal-delay-2">
+                <div class="card-header">
+                    <span class="card-icon">🛒</span>
+                    <div class="card-title">Welcome back</div>
+                    <div class="card-sub">Sign in to continue to SmartMart</div>
+                </div>
+
+                <!-- Tab row -->
+                <div class="tab-row" role="tablist">
+                    <button class="tab-btn active" role="tab" aria-selected="true" id="tab-login">Sign in</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" id="tab-register">Register</button>
+                </div>
+
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-box {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- ── LOGIN FORM — backend hooks preserved ── -->
+                <form action="/login" method="POST" id="loginForm" autocomplete="off">
+
+                    <div class="field">
+                        <label class="field-label" for="username">Username</label>
+                        <div class="field-wrap">
+                            <span class="field-icon">👤</span>
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                class="field-input"
+                                placeholder="Enter your username"
+                                required
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="password">Password</label>
+                        <div class="field-wrap">
+                            <span class="field-icon">🔒</span>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="field-input"
+                                placeholder="Enter your password"
+                                required
+                            >
+                            <button type="button" class="pwd-toggle" id="pwdToggle" aria-label="Toggle password visibility">👁</button>
+                        </div>
+                    </div>
+
+                    <div class="form-meta">
+                        <label class="remember-label">
+                            <input type="checkbox" name="remember"> Remember me
+                        </label>
+                        <a href="#" class="forgot-link">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="loginSubmitBtn">
+                        Sign In &nbsp;→
+                    </button>
+
+                </form>
+
+                <!-- ── REGISTER FORM — backend hooks: action/method/name attrs preserved ── -->
+                <form action="/register" method="POST" id="registerForm" autocomplete="off" style="display:none;">
+
+                    <div class="field">
+                        <label class="field-label" for="reg-username">Username</label>
+                        <div class="field-wrap">
+                            <span class="field-icon">👤</span>
+                            <input
+                                type="text"
+                                id="reg-username"
+                                name="username"
+                                class="field-input"
+                                placeholder="Choose a username"
+                                required
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="reg-email">Email</label>
+                        <div class="field-wrap">
+                            <span class="field-icon">✉️</span>
+                            <input
+                                type="email"
+                                id="reg-email"
+                                name="email"
+                                class="field-input"
+                                placeholder="you@example.com"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="reg-mobile">Mobile</label>
+                        <div class="field-wrap">
+                            <span class="field-icon">📱</span>
+                            <input
+                                type="tel"
+                                id="reg-mobile"
+                                name="mobile"
+                                class="field-input"
+                                placeholder="+91 98765 43210"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="reg-password">Password</label>
+                        <div class="field-wrap">
+                            <span class="field-icon">🔒</span>
+                            <input
+                                type="password"
+                                id="reg-password"
+                                name="password"
+                                class="field-input"
+                                placeholder="Create a strong password"
+                                required
+                            >
+                            <button type="button" class="pwd-toggle" id="regPwdToggle" aria-label="Toggle password visibility">👁</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="registerSubmitBtn">
+                        Create Account &nbsp;→
+                    </button>
+
+                </form>
+
+                <p class="form-footer">
+                    <a href="#" id="footerRegisterLink">Create an account</a>
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ═══════════ FOOTER ═══════════ -->
+    <footer id="footer">
+        &copy; 2026 <span>SmartMart</span> Enterprise &mdash; All rights reserved.
+    </footer>
+
+    <script>
+    (function () {
+        'use strict';
+
+        /* ── Intersection Observer: reveal on scroll ── */
+        const revealer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                    revealer.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll('.reveal').forEach(el => revealer.observe(el));
+
+        /* ── Parallax on scroll ── */
+        const heroContent = document.getElementById('heroContent');
+        const orb1 = document.querySelector('.orb-1');
+        const orb2 = document.querySelector('.orb-2');
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    const sy = window.scrollY;
+                    if (heroContent) {
+                        heroContent.style.transform = `translateY(${sy * 0.38}px)`;
+                        heroContent.style.opacity = Math.max(0, 1 - sy / 620);
+                    }
+                    if (orb1) orb1.style.transform = `translate(${sy * 0.06}px, ${sy * 0.10}px)`;
+                    if (orb2) orb2.style.transform = `translate(${-sy * 0.05}px, ${sy * 0.08}px)`;
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }, { passive: true });
+
+        /* ── Password toggle ── */
+        const pwdToggle = document.getElementById('pwdToggle');
+        const pwdField  = document.getElementById('password');
+        if (pwdToggle && pwdField) {
+            pwdToggle.addEventListener('click', () => {
+                const isText = pwdField.type === 'text';
+                pwdField.type = isText ? 'password' : 'text';
+                pwdToggle.textContent = isText ? '👁' : '🙈';
+            });
+        }
+
+        /* ── Smooth scroll for hero CTA ── */
+        document.querySelectorAll('a[href="#login-section"]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                document.getElementById('login-section').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        /* ── Card tilt — instant snap on drag, smooth glide back to rest ── */
+        const card = document.querySelector('.form-card');
+        if (card) {
+            card.addEventListener('mousemove', e => {
+                card.style.transition = 'none';          // snap instantly to cursor
+                const rect = card.getBoundingClientRect();
+                const dx = (e.clientX - rect.left - rect.width  / 2) / (rect.width  / 2);
+                const dy = (e.clientY - rect.top  - rect.height / 2) / (rect.height / 2);
+                card.style.transform = `perspective(900px) rotateY(${dx * 4}deg) rotateX(${-dy * 4}deg) translateY(-6px)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transition = 'transform 0.5s var(--bezier)';  // glide back
+                card.style.transform  = '';
+            });
+        }
+
+        /* ── Feat card micro-tilt — same instant/glide pattern ── */
+        document.querySelectorAll('.feat-card').forEach(c => {
+            c.addEventListener('mousemove', e => {
+                c.style.transition = 'none';
+                const r  = c.getBoundingClientRect();
+                const dx = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
+                const dy = (e.clientY - r.top  - r.height / 2) / (r.height / 2);
+                c.style.transform = `perspective(600px) rotateY(${dx*6}deg) rotateX(${-dy*6}deg) translateY(-6px)`;
+            });
+            c.addEventListener('mouseleave', () => {
+                c.style.transition = 'transform 0.4s var(--bezier)';
+                c.style.transform  = '';
+            });
+        });
+
+        /* ── Tab toggle: Sign in ↔ Register ── */
+        const tabLogin    = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const loginForm   = document.getElementById('loginForm');
+        const registerForm= document.getElementById('registerForm');
+        const cardTitle   = document.querySelector('.card-title');
+        const cardSub     = document.querySelector('.card-sub');
+
+        function activateTab(tab) {
+            const isRegister = (tab === 'register');
+
+            // Tab button states
+            tabLogin.classList.toggle('active', !isRegister);
+            tabLogin.setAttribute('aria-selected', String(!isRegister));
+            tabRegister.classList.toggle('active', isRegister);
+            tabRegister.setAttribute('aria-selected', String(isRegister));
+
+            // Form visibility
+            loginForm.style.display    = isRegister ? 'none'  : 'block';
+            registerForm.style.display = isRegister ? 'block' : 'none';
+
+            // Header copy
+            if (cardTitle) cardTitle.textContent = isRegister ? 'Create an Account' : 'Welcome back';
+            if (cardSub)   cardSub.textContent   = isRegister ? 'Join SmartMart for free' : 'Sign in to continue to SmartMart';
+        }
+
+        tabLogin   .addEventListener('click', () => activateTab('login'));
+        tabRegister.addEventListener('click', () => activateTab('register'));
+
+        // Footer & hero "Create account" links trigger register tab
+        const footerRegLink = document.getElementById('footerRegisterLink');
+        if (footerRegLink) {
+            footerRegLink.addEventListener('click', e => {
+                e.preventDefault();
+                document.getElementById('login-section').scrollIntoView({ behavior: 'smooth' });
+                setTimeout(() => activateTab('register'), 400);
+            });
+        }
+        document.querySelectorAll('[data-tab="register"]').forEach(el => {
+            el.addEventListener('click', e => {
+                e.preventDefault();
+                document.getElementById('login-section').scrollIntoView({ behavior: 'smooth' });
+                setTimeout(() => activateTab('register'), 400);
+            });
+        });
+
+        /* ── Register form password toggle ── */
+        const regPwdToggle = document.getElementById('regPwdToggle');
+        const regPwdField  = document.getElementById('reg-password');
+        if (regPwdToggle && regPwdField) {
+            regPwdToggle.addEventListener('click', () => {
+                const isText = regPwdField.type === 'text';
+                regPwdField.type = isText ? 'password' : 'text';
+                regPwdToggle.textContent = isText ? '👁' : '🙈';
+            });
+        }
+
+    })();
+    </script>
 
 </body>
 </html>
+{% endif %}

@@ -155,7 +155,7 @@ def api_validate_exit():
 @api_bp.route('/cart/scan', methods=['POST'])
 def scan_to_cart():
     # 1. Security Check
-    if 'user_id' not in session and 'guest_id' not in session:
+    if 'user_id' not in session:
         return jsonify({'error': 'Session expired. Please log in again.'}), 401
 
     data = request.get_json()
