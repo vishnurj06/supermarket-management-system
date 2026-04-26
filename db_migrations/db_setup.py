@@ -99,5 +99,3 @@ def init_db():
         if 'conn' in locals() and conn.open:
             conn.close()
 
-if __name__ == '__main__':
-    init_db()

@@ -91,16 +91,16 @@ class Product:
         finally:
             conn.close()
 
-    @staticmethod
-    def update(product_id, name, price, stock, weight_g, image_url, vendor_phone=''):
+    @classmethod
+    def update(cls, product_id, name, price, stock, weight_g, image_url, vendor_phone, category):
         conn = DB.get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute('''
                     UPDATE products 
-                    SET name=%s, price=%s, stock=%s, weight_g=%s, image_url=%s, vendor_phone=%s
+                    SET name=%s, price=%s, stock=%s, weight_g=%s, image_url=%s, vendor_phone=%s, category=%s 
                     WHERE id=%s
-                ''', (name, price, stock, weight_g, image_url, vendor_phone, product_id))
+                ''', (name, price, stock, weight_g, image_url, vendor_phone, category, product_id))
                 conn.commit()
         finally:
             conn.close()

@@ -2,149 +2,284 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SmartMart</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - SmartMart Enterprise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .login-container {
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --bg-body: #e2e8f0; /* Darker desktop background */
+            --input-bg: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
             display: flex;
-            align-items: center;
             justify-content: center;
-            height: 100vh;
-            background: var(--bg-light);
+            align-items: center;
+            min-height: 100vh;
         }
-        .login-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 3rem;
+
+        /* --- THE MOBILE FRAME --- */
+        .app-container {
             width: 100%;
-            max-width: 420px;
-            box-shadow: var(--shadow-md);
+            max-width: 400px;
+            background: #0f172a; /* Deep dark blue top section */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
-        .login-logo {
+
+        /* Simulates a phone screen on desktop */
+        @media (min-width: 401px) {
+            .app-container {
+                height: 850px;
+                max-height: 90vh;
+                border-radius: 40px;
+                border: 8px solid #ffffff;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .app-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+
+        /* --- TOP BRANDING SECTION --- */
+        .brand-header {
+            padding: 4rem 2rem 5rem 2rem;
             text-align: center;
-            margin-bottom: 0.5rem;
+            color: white;
+            position: relative;
         }
-        .login-box h1 {
-            font-size: 1.75rem;
+
+        /* Subtle background glow from the Dribbble shots */
+        .brand-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .logo-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .brand-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin: 0;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- BOTTOM OVERLAPPING CARD --- */
+        .form-sheet {
+            background: #ffffff;
+            flex: 1;
+            border-radius: 40px 40px 0 0;
+            padding: 2.5rem 2rem;
+            margin-top: -30px; /* Pulls it up over the dark background */
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sheet-handle {
+            width: 40px;
+            height: 5px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            margin: 0 auto 2rem auto;
+        }
+
+        .welcome-text {
+            font-size: 1.8rem;
+            font-weight: 800;
             color: var(--text-main);
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.5px;
         }
-        .subtitle {
+
+        .instruction-text {
             color: var(--text-muted);
             font-size: 0.95rem;
-            margin-bottom: 2rem;
-            text-align: center;
+            margin: 0 0 2rem 0;
         }
-        .form-group {
-            margin-bottom: 1.25rem;
+
+        /* --- INPUT FIELDS --- */
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 1.2rem;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
+
+        .input-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: #94a3b8;
+        }
+
+        .fat-input {
+            width: 100%;
+            padding: 1.2rem 1.2rem 1.2rem 3rem;
+            background: var(--input-bg);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-family: inherit;
             color: var(--text-main);
             font-weight: 500;
-            font-size: 0.9rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
         }
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--border);
+
+        .fat-input:focus {
             outline: none;
-            transition: border-color 0.2s;
-        }
-        .form-group input:focus {
+            background: #ffffff;
             border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);
         }
-        .error-msg {
-            background: #fef2f2;
-            color: var(--danger);
-            border: 1px solid #fecaca;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            text-align: center;
+
+        .fat-input::placeholder {
+            color: #cbd5e1;
+            font-weight: 500;
         }
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            color: var(--text-muted);
-            margin: 1.5rem 0;
-            font-size: 0.9rem;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--border);
-        }
-        .divider::before { margin-right: .5em; }
-        .divider::after { margin-left: .5em; }
-        .btn-full {
-            width: 100%;
-            padding: 0.85rem;
-            font-size: 1rem;
-            justify-content: center;
+
+        .forgot-pass {
+            display: block;
+            text-align: right;
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 600;
             text-decoration: none;
+            margin-bottom: 2rem;
+            margin-top: -0.5rem;
         }
+
+        /* --- PRIMARY BUTTON --- */
+        .btn-login {
+            width: 100%;
+            padding: 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 100px; /* Full pill shape */
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+            margin-top: auto; /* Pushes button to bottom of form */
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            background: var(--primary-hover);
+            box-shadow: 0 12px 25px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        /* --- FLASH MESSAGES --- */
+        .flash-msg {
+            padding: 1rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .flash-error { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+        .flash-success { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; }
+
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-box scale-in">
-            <div class="login-logo">
-                <h1>SmartMart</h1>
-            </div>
 
-            {% if 'customer' in config.get('REGISTERED_BLUEPRINTS', []) %}
-                <div class="subtitle">Welcome back! Please sign in to your account.</div>
+    <div class="app-container">
+        
+        <div class="brand-header">
+            <div class="logo-icon">🛒</div>
+            <h1 class="brand-title">SmartMart</h1>
+            <p class="brand-subtitle">Control everything in one place.</p>
+        </div>
+
+        <div class="form-sheet">
+            <div class="sheet-handle"></div>
+            
+            <h2 class="welcome-text">Log in</h2>
+            <p class="instruction-text">Sign in to enjoy the best experience.</p>
+
+            <form action="/login" method="POST" style="display: flex; flex-direction: column; flex: 1;">
                 
-                {% if error %}
-                    <div class="error-msg">{{ error }}</div>
-                {% endif %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-msg {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-                <form method="POST" action="/login">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" name="username" required placeholder="Enter your username">
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" required placeholder="Enter your password">
-                    </div>
-                    <button type="submit" class="btn-primary btn-full">Sign In</button>
-                </form>
-
-                <div class="divider">Or</div>
-
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <a href="/register" class="btn-secondary btn-full">Create an Account</a>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="username" name="username" class="fat-input" placeholder="Username or ID" required autocomplete="off">
                 </div>
 
-            {% else %}
-                <div class="subtitle">Authorized Personnel Portal</div>
-                
-                {% if error %}
-                    <div class="error-msg">{{ error }}</div>
-                {% endif %}
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" name="password" class="fat-input" placeholder="Password" required>
+                </div>
 
-                <form method="POST" action="/login">
-                    <div class="form-group">
-                        <label>Employee ID / Username</label>
-                        <input type="text" name="username" required placeholder="e.g., admin or staff">
-                    </div>
-                    <div class="form-group">
-                        <label>Secure Password</label>
-                        <input type="password" name="password" required placeholder="Enter your password">
-                    </div>
-                    <button type="submit" class="btn-primary btn-full" style="background: var(--text-main); margin-top: 1rem;">System Login</button>
-                </form>
-            {% endif %}
-            
+                <a href="#" class="forgot-pass">Forgot Password?</a>
+
+                <button type="submit" class="btn-login">Login</button>
+            </form>
         </div>
+
     </div>
+
 </body>
 </html>

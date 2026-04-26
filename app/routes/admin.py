@@ -28,7 +28,24 @@ def admin_dashboard():
     except Exception:
         pass
     
-    # --- NEW: Time-based Analytics Calculation ---
+    # --- PRE-CALCULATE WHATSAPP NUMBERS (WITH SPAM COMPLIANCE) ---
+    clean_numbers = []
+    for u in users:
+        mobile = str(u.get('mobile', '')).strip()
+        
+        # 1. Check if the mobile number is actually valid
+        is_valid = mobile and mobile.lower() not in ['none', 'n/a', '']
+        
+        # 2. Check if they explicitly opted IN to offers
+        # IMPORTANT: Change 'get_offers' to whatever your actual database column is named!
+        opted_in = u.get('wants_offers') in [1, True, '1', 'true', 'on', 'yes'] 
+        
+        if is_valid and opted_in:
+            clean_numbers.append(mobile)
+
+    bulk_whatsapp_numbers = ", ".join(clean_numbers)
+    
+    # --- Time-based Analytics & Chart Calculation ---
     now = datetime.now()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday()) # Monday
@@ -39,6 +56,10 @@ def admin_dashboard():
         'daily_ord': 0, 'weekly_ord': 0, 'monthly_ord': 0, 'total_ord': 0
     }
 
+    # NEW: Prepare data arrays for the 7-day chart
+    chart_labels = [(today_start - timedelta(days=i)).strftime('%a') for i in range(6, -1, -1)]
+    chart_data = [0] * 7
+
     for o in orders:
         amt = float(o.get('total_amount', 0))
         o_date = o.get('date')
@@ -46,23 +67,28 @@ def admin_dashboard():
         stats['total_rev'] += amt
         stats['total_ord'] += 1
         
-        if o_date:
-            # PyMySQL returns datetime objects. We compare them securely.
-            if isinstance(o_date, datetime):
-                if o_date >= today_start:
-                    stats['daily_rev'] += amt
-                    stats['daily_ord'] += 1
-                if o_date >= week_start:
-                    stats['weekly_rev'] += amt
-                    stats['weekly_ord'] += 1
-                if o_date >= month_start:
-                    stats['monthly_rev'] += amt
-                    stats['monthly_ord'] += 1
+        if o_date and isinstance(o_date, datetime):
+            # General Stats
+            if o_date >= today_start:
+                stats['daily_rev'] += amt
+                stats['daily_ord'] += 1
+            if o_date >= week_start:
+                stats['weekly_rev'] += amt
+                stats['weekly_ord'] += 1
+            if o_date >= month_start:
+                stats['monthly_rev'] += amt
+                stats['monthly_ord'] += 1
+                
+            # NEW: Calculate exact day for the Chart
+            days_ago = (today_start.date() - o_date.date()).days
+            if 0 <= days_ago <= 6:
+                index = 6 - days_ago
+                chart_data[index] += amt
 
     low_stock_items = [p for p in products if p.get('stock', 0) < 10]
     total_products = len(products)
-
-    # ... (your existing stats and low_stock code) ...
+    
+    
 
     # NEW: Fetch Support Tickets
     tickets = []
@@ -75,7 +101,7 @@ def admin_dashboard():
         print(f"Error fetching tickets: {e}")
     finally:
         conn.close()
-        
+
     return render_template('admin.html', 
                            products=products, 
                            orders=orders, 
@@ -83,15 +109,10 @@ def admin_dashboard():
                            total_products=total_products, 
                            low_stock_items=low_stock_items,
                            stats=stats,
-                           tickets=tickets) # <-- Add tickets here!
-    
-    return render_template('admin.html', 
-                           products=products, 
-                           orders=orders, 
-                           users=users, 
-                           total_products=total_products, 
-                           low_stock_items=low_stock_items,
-                           stats=stats) # Pass new stats to the HTML
+                           tickets=tickets,
+                           chart_labels=chart_labels,   
+                           chart_data=chart_data,
+                           bulk_whatsapp_numbers=bulk_whatsapp_numbers)      
 
 @admin_bp.route('/add_product', methods=['POST'])
 def add_product():
@@ -115,9 +136,14 @@ def edit_product(product_id):
     if session.get('role') != 'admin': return redirect(url_for('auth.login'))
     try:
         Product.update(
-            product_id=product_id, name=request.form['name'], price=float(request.form['price']),
-            stock=int(request.form['stock']), weight_g=int(request.form.get('weight_g', 0)),
-            image_url=request.form['image_url'], vendor_phone=request.form.get('vendor_phone', '')
+            product_id=product_id, 
+            name=request.form['name'], 
+            price=float(request.form['price']),
+            stock=int(request.form['stock']), 
+            weight_g=int(request.form.get('weight_g', 0)),
+            image_url=request.form['image_url'], 
+            category=request.form.get('category', ''), # <-- THIS WAS MISSING!
+            vendor_phone=request.form.get('vendor_phone', '')
         )
         flash('Product updated successfully!', 'success')
     except Exception as e: flash(f'Error updating product: {str(e)}', 'error')
