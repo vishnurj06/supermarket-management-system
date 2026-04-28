@@ -5,289 +5,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exit Validation Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/staff_premium.css') }}">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <style>
-        .staff-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 1.5rem;
-        }
-
-        .validation-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 2.5rem;
-            box-shadow: var(--shadow-md);
-            margin-top: 2rem;
-        }
-
-        .scanner-container {
-            border: none;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 1.5rem;
-            background: #0f172a; /* Dark slate background */
-            padding: 2rem 1rem;
-            text-align: center;
-            box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
-        }
-        /* Make the camera text/borders look good on dark background */
-        #reader { border: none !important; color: white !important; }
-        #reader select { padding: 0.5rem; border-radius: 6px; margin-bottom: 1rem; }
-        
-        .input-group-lg {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .input-group-lg input {
-            flex: 1;
-            font-size: 1.25rem;
-            padding: 1rem;
-            font-family: var(--font-mono);
-            letter-spacing: 2px;
-            text-align: center;
-            border: 2px solid var(--border);
-            border-radius: 0.5rem;
-            outline: none;
-        }
-
-        .input-group-lg input:focus {
-            border-color: var(--primary);
-        }
-
-        .input-group-lg button {
-            padding: 0 2rem;
-            font-size: 1.1rem;
-        }
-
-        .order-details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            background: var(--bg-light);
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border);
-            margin-bottom: 2rem;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .detail-item .label {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .detail-item .value {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .validation-action {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            background: var(--bg-light);
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border);
-        }
-
-        .weight-input-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .weight-input-container input {
-            flex: 1;
-            font-size: 1.5rem;
-            text-align: right;
-            padding: 1rem;
-            font-family: var(--font-mono);
-            border: 2px solid var(--border);
-            border-radius: 0.5rem;
-            outline: none;
-        }
-        
-        .weight-input-container input:focus { border-color: var(--primary); }
-
-        .weight-unit {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--text-muted);
-        }
-
-        #validation-result {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            text-align: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            border: 2px solid transparent;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .result-verified {
-            background: #dcfce7;
-            color: #166534;
-            border-color: #4ade80 !important;
-        }
-
-        .result-recheck {
-            background: #fef3c7;
-            color: #d97706;
-            border-color: #fbd38d !important;
-            animation: pulse-border 2s infinite;
-        }
-
-        .result-inspection {
-            background: #fee2e2;
-            color: #dc2626;
-            border-color: #f87171 !important;
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-        }
-
-        /* --- NEW: Force styling on the ugly default scanner UI --- */
-        #reader { border: none !important; background: transparent !important; }
-        #reader img { display: none !important; } /* Hides the default mobile icon */
-        #reader__dashboard_section_swaplink { display: none !important; } /* Hides 'Scan an Image File' */
-        
-        #reader__dashboard_section_csr { padding: 1rem !important; }
-
-        /* Nuclear option to hide the scanner's extra links */
-        #reader a, div[id^="reader__dashboard_section_swaplink"] { 
-            display: none !important; 
-            visibility: hidden !important; 
-            opacity: 0 !important; 
-            height: 0 !important; 
-        }
-        
-        /* Style the Start/Stop camera buttons */
-        #html5-qrcode-button-camera-start, 
-        #html5-qrcode-button-camera-stop {
-            background-color: var(--primary) !important;
-            color: white !important;
-            border: none !important;
-            padding: 0.8rem 1.5rem !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            font-family: inherit !important;
-            cursor: pointer !important;
-            transition: 0.2s;
-            margin-bottom: 10px;
-        }
-        
-        #html5-qrcode-button-camera-start:hover { background-color: #1d4ed8 !important; }
-        
-        /* Style the camera dropdown menu */
-        #reader__camera_selection {
-            padding: 0.6rem !important;
-            border-radius: 6px !important;
-            border: 1px solid var(--border) !important;
-            font-family: inherit !important;
-            margin-bottom: 10px !important;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        
-    </style>
 </head>
 
 <body>
     <div class="staff-container">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--sp-border); margin-bottom: 0.5rem;">
             <h1>Point of Sale - Exit Validation</h1>
             <a href="/logout" class="btn-secondary">Logout</a>
         </div>
 
-        <div class="validation-card">
-            <h2 style="margin-bottom: 1rem;">Scanner & Manual Entry</h2>
+        <div class="staff-grid">
             
-            <div id="reader" class="scanner-container"></div>
-            
-            <div style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">
-                — Or Enter Customer Code Manually —
-            </div>
+            <div class="validation-card">
 
-            <div class="input-group-lg">
-                <input type="text" id="order-id-input" placeholder="e.g. SM-2026-0023" autocomplete="off">
-                <button id="fetch-order-btn" class="btn-primary">Find Order</button>
-            </div>
+                <!-- VIEW A: Scanner & Manual Entry (default visible) -->
+                <div id="scanner-view">
+                    <h2 style="margin-bottom: 1rem;">Scanner &amp; Manual Entry</h2>
 
-            <div id="order-details-section" class="hidden">
-                <div class="order-details-grid scale-in">
-                    <div class="detail-item">
-                        <span class="label">Customer Username</span>
-                        <span class="value" id="display-customer">--</span>
+                    <div id="reader" class="scanner-container">
+                        <div class="scanner-brackets"></div>
+                        <div class="scanner-bracket-br"></div>
                     </div>
-                    <div class="detail-item">
-                        <span class="label">Total Amount Paid</span>
-                        <span class="value mono text-primary" id="display-amount">--</span>
+
+                    <div style="text-align:center; color:var(--sp-text-lo); margin-bottom:1.25rem; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em;">
+                        — Or Enter Customer Code Manually —
                     </div>
-                    <div class="detail-item">
-                        <span class="label">Expected Weight (DB)</span>
-                        <span class="value mono" id="display-expected-weight" style="color:var(--primary);">--</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="label">Payment Status</span>
-                        <span class="status-badge" id="display-status">--</span>
+
+                    <div class="input-group-lg">
+                        <input type="text" id="order-id-input" placeholder="e.g. SM-2026-0023" autocomplete="off">
+                        <button id="fetch-order-btn" class="btn-primary">Find Order</button>
                     </div>
                 </div>
 
-                <div class="purchased-items-container scale-in" style="margin-top: 1.5rem; margin-bottom: 2rem;">
-                    <h3 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Purchased Items</h3>
-                    <ul id="display-items-list" style="list-style: none; padding: 0; margin: 0; background: var(--bg-light); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem; max-height: 200px; overflow-y: auto;">
-                        </ul>
-                </div>
+                <!-- VIEW B: Order Verification (hidden until order is fetched) -->
+                <div id="order-details-section" class="hidden">
 
-                <div class="validation-action scale-in">
-                    <h3 style="margin-bottom: 0.5rem;">Physical Scale Measurement</h3>
-                    <div class="weight-input-container">
-                        <input type="number" id="measured-weight" placeholder="0" autocomplete="off">
-                        <span class="weight-unit">g</span>
-                        <button id="validate-btn" class="btn-primary"
-                            style="padding: 1rem 2rem; font-size:1.1rem;">Verify & Clear</button>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h2 style="margin-bottom:0;">Order Verification</h2>
+                        <button id="cancel-verify-btn" class="btn-secondary" style="border-radius:999px; padding:0.4rem 1.1rem; font-size:0.82rem;">
+                            ← Cancel
+                        </button>
                     </div>
+
+                    <div class="order-details-grid scale-in">
+                        <div class="detail-item">
+                            <span class="label">Customer Username</span>
+                            <span class="value" id="display-customer">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Total Amount Paid</span>
+                            <span class="value mono" id="display-amount">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Expected Weight (DB)</span>
+                            <span class="value mono" id="display-expected-weight">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Payment Status</span>
+                            <span class="status-badge" id="display-status">--</span>
+                        </div>
+                    </div>
+
+                    <div class="purchased-items-container scale-in" style="margin-top:1.5rem; margin-bottom:2rem;">
+                        <h3 style="margin-bottom:0.5rem; font-size:0.9rem; color:var(--sp-text-lo); text-transform:uppercase; font-weight:700;">Purchased Items</h3>
+                        <ul id="display-items-list"></ul>
+                    </div>
+
+                    <div class="validation-action scale-in">
+                        <h3 style="margin-bottom:0.5rem;">Physical Scale Measurement</h3>
+                        <div class="weight-input-container">
+                            <input type="number" id="measured-weight" placeholder="0" autocomplete="off">
+                            <span class="weight-unit">g</span>
+                            <button id="validate-btn" class="btn-primary" style="padding:1rem 2rem; font-size:1.1rem;">Verify &amp; Clear</button>
+                        </div>
+                    </div>
+
+                    <div id="validation-result" class="hidden"></div>
                 </div>
 
-                <div id="validation-result" class="hidden"></div>
             </div>
-        </div>
 
-        <div class="validation-card" style="margin-top:2rem;">
-            <h2 style="margin-bottom: 1rem;">Live Pending Transactions</h2>
-            <div id="pending-orders-list" style="display:flex; flex-direction:column; gap:0.5rem;">
-                <div style="color:var(--text-muted); text-align:center;">Looking for new transactions...</div>
+
+            <div class="validation-card" style="margin-top: 0;">
+                <h2 style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sp-text-mid); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem;">
+                    Live Pending Transactions
+                </h2>
+                <div id="pending-orders-list">
+                    <div style="text-align:center; padding: 2rem 0; color: var(--sp-text-lo);">Looking for new transactions...</div>
+                </div>
             </div>
-        </div>
+
+        </div> 
     </div>
 
     <script>
@@ -335,9 +145,17 @@
                 }
 
                 currentExitCode = data.exit_code;
-                document.getElementById('display-customer').textContent = data.username;
+                
+                // --- STRICT USERNAME FALLBACK ---
+                const customerName = (data.username && data.username.trim() !== '') ? data.username : 'Guest Shopper';
+                document.getElementById('display-customer').textContent = customerName;
+                
                 document.getElementById('display-amount').textContent = '₹' + parseFloat(data.total_amount).toFixed(2);
                 document.getElementById('display-expected-weight').textContent = data.total_expected_weight + 'g';
+                
+                // --- SWAP VIEWS ---
+                document.getElementById('scanner-view').classList.add('hidden');
+                document.getElementById('order-details-section').classList.remove('hidden');
                 
                 // 1. UPDATED STATUS LOGIC
                 const payStatus = (data.payment_status || 'PAID').toUpperCase();
@@ -345,17 +163,24 @@
                 statusBadge.textContent = payStatus;
                 statusBadge.className = (payStatus === 'PENDING') ? 'status-badge status-pending' : 'status-badge status-verified';
 
-                // 2. NEW ITEMS LIST LOGIC
+                // --- Fix 2: Clean Item List Injection ---
+                // --- Fix: Reset Verify Button Text on new fetch ---
+                document.getElementById('validate-btn').innerHTML = 'Verify & Clear';
+
+                // 2. NEW ITEMS LIST LOGIC (With Weight Math Fix)
                 const itemsList = document.getElementById('display-items-list');
                 if (data.items && data.items.length > 0) {
-                    itemsList.innerHTML = data.items.map(item => `
-                        <li style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0;">
-                            <span style="font-weight: 600; color: var(--text-main);">${item.qty}x ${item.name}</span>
-                            <span style="color: var(--text-muted); font-family: var(--font-mono);">${item.weight_g ? item.weight_g + 'g' : ''}</span>
-                        </li>
-                    `).join('');
+                    itemsList.innerHTML = data.items.map(item => {
+                        // Calculate total weight for this row (qty * unit weight)
+                        const rowWeight = item.weight_g ? (parseInt(item.weight_g) * parseInt(item.qty)) + 'g' : '';
+                        
+                        return `<li>
+                            <span>${item.qty}x ${item.name}</span>
+                            <span>${rowWeight}</span>
+                        </li>`;
+                    }).join('');
                 } else {
-                    itemsList.innerHTML = `<li style="color: var(--text-muted); text-align: center;">Item details not provided by database.</li>`;
+                    itemsList.innerHTML = `<li style="justify-content:center; color: var(--sp-text-lo);">Item details not provided.</li>`;
                 }
 
                 // 3. MEASURED WEIGHT INPUT (Declared only once!)
@@ -382,7 +207,12 @@
 
         function resetOrderDetails() {
             currentExitCode = null;
+            
+            // --- SWAP VIEWS BACK ---
+            // Hide the details, SHOW the scanner
             document.getElementById('order-details-section').classList.add('hidden');
+            document.getElementById('scanner-view').classList.remove('hidden'); 
+            
             document.getElementById('display-customer').textContent = '--';
             document.getElementById('display-amount').textContent = '--';
             document.getElementById('display-expected-weight').textContent = '--';
@@ -391,7 +221,17 @@
             document.getElementById('measured-weight').value = '';
             document.getElementById('measured-weight').placeholder = '0';
             document.getElementById('validation-result').className = 'hidden';
+            
+            // --- RESET BUTTON TEXT ---
+            document.getElementById('validate-btn').innerHTML = 'Verify & Clear';
         }
+
+        // ── Wire up the Cancel button ──
+        // (You can also simplify this now since the reset function does the heavy lifting)
+        document.getElementById('cancel-verify-btn').addEventListener('click', () => {
+            resetOrderDetails();
+            document.getElementById('order-id-input').value = '';
+        });
 
         // --- VALIDATE & CLEAR LOGIC (With 5% Margin) ---
         document.getElementById('validate-btn').addEventListener('click', async () => {
