@@ -1215,6 +1215,12 @@
     })();
     </script>
 
+    <script>
+        // Security Wipe: Ensure no cart or budget data survives from a previous session
+        localStorage.clear();
+        sessionStorage.clear();
+    </script>
+
 </body>
 </html>
 {% endif %}

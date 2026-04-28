@@ -1,379 +1,326 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base_customer.html" %}
+{% block title %}Explore Aisles{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartMart | Shopping Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        .cart-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .cart-stat {
-            background: var(--bg-light);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .cart-stat .label {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
-            font-weight: 600;
-        }
-
-        .cart-stat .value {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary);
-            font-family: var(--font-mono);
-        }
-
-        /* --- NEW: Embedded Profile Menu CSS --- */
-        .profile-menu { position: relative; display: inline-block; }
-        .profile-btn { 
-            background: #f1f5f9; border: 1px solid var(--border); padding: 0.6rem 1rem; 
-            border-radius: 999px; font-weight: 600; color: var(--text-main); 
-            cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; 
-        }
-        .profile-btn:hover { background: #e2e8f0; }
-        .dropdown-content { 
-            display: none; position: absolute; right: 0; top: 110%; background-color: white; 
-            min-width: 200px; box-shadow: var(--shadow-lg); border-radius: 12px; 
-            border: 1px solid var(--border); z-index: 1000; overflow: hidden; 
-        }
-        .profile-menu:hover .dropdown-content { display: block; }
-        .dropdown-item { 
-            padding: 0.8rem 1.2rem; text-decoration: none; display: flex; align-items: center; 
-            gap: 10px; color: var(--text-main); font-size: 0.9rem; font-weight: 500; 
-            border-bottom: 1px solid #f1f5f9; transition: background 0.2s; 
-        }
-        .dropdown-item:hover { background: #f8fafc; color: var(--primary); }
-        .dropdown-item.text-danger { color: var(--danger); border-bottom: none;}
-        .dropdown-item.text-danger:hover { background: #fef2f2; color: var(--danger-hover); }
-
-        /* Checkout Animation */
-        .success-checkmark {
-            width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: block;
-            stroke-width: 2; stroke: #4bb71b; stroke-miterlimit: 10;
-            box-shadow: inset 0px 0px 0px #4bb71b;
-            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
-        }
-        .success-checkmark .checkmark_circle {
-            stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10;
-            stroke: #4bb71b; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-        }
-        .success-checkmark .checkmark_check {
-            transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48;
-            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
-        }
-        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
-        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
-        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px #4bb71b; } }
-    </style>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-</head>
-
-<body>
-    <div class="app-container">
-        <header class="app-header" style="justify-content: space-between; gap: 2rem; flex-wrap: wrap;">
-            <div class="logo">
-                <div class="logo-icon"></div>
-                <h1>SmartMart</h1>
-            </div>
-
-            <div style="display:flex; align-items:center; gap: 1rem; margin-left: auto;">
-                <div class="budget-display" id="global-budget-display" style="display:none; cursor:pointer;">
-                    <span class="label">Budget Remaining</span>
-                    <span id="budget-amount" class="amount mono">₹0.00</span>
-                </div>
-                
-                <button id="set-budget-btn" class="btn-primary">
-                    💰 Set Budget
-                </button>
-
-                <div style="width:1px; height: 30px; background: var(--border); margin: 0 1rem;"></div>
-
-                <div class="profile-menu">
-                    <button class="profile-btn">
-                        👤 Hi, {{ username }} ▼
-                    </button>
-                    <div class="dropdown-content">
-                        <a href="#" onclick="openProfileModal(); return false;" class="dropdown-item">⚙️ My Profile</a>
-                        <a href="/my_orders" class="dropdown-item">📦 My Orders</a>
-                        <a href="#" onclick="openSupportModal(); return false;" class="dropdown-item">🎧 Support</a>
-                        <a href="/logout" class="dropdown-item text-danger">🚪 Logout</a>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <main class="main-content">
-            <section class="catalog-section">
-                <div class="section-header" style="margin-bottom: 0.5rem;">
-                    <h2>Supermarket Aisles</h2>
-                    <p class="subtitle">Click on products to add them to your smart cart seamlessly.</p>
-                </div>
-
-                <div class="filter-bar" style="display: flex; gap: 1rem;">
-                    <button id="start-scan-btn" class="btn-primary" style="background: var(--text-main); padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap;">
-                        <span style="font-size: 1.2rem;">📷</span> Scan Item
-                    </button>
-                    <input type="text" id="search-input" class="search-input" style="flex: 1;"
-                        placeholder="Search for groceries, household...">
-                </div>
-
-                <div class="category-tabs" id="category-tabs">
-                    <button class="category-tab active" data-category="all">All Items</button>
-                    </div>
-
-                <div id="product-grid" class="product-grid" style="margin-top: 1rem;">
-                    <div style="text-align:center; padding: 2rem; color: var(--text-muted); width:100%;">
-                        <div class="loader" style="margin-bottom: 10px;"></div><br>
-                        Loading products...
-                    </div>
-                </div>
-            </section>
-
-            <section class="cart-section">
-                <div class="cart-header">
-                    <h2 style="font-size: 1.4rem;">Your Cart</h2>
-                    <span id="cart-item-count" class="badge">0</span>
-                </div>
-
-                <div class="cart-grid">
-                    <div class="cart-stat">
-                        <span class="label">Total Items</span>
-                        <span id="stat-total-items" class="value">0</span>
-                    </div>
-                    <div class="cart-stat">
-                        <span class="label">Expected Weight</span>
-                        <span id="cart-weight" class="value">0g</span>
-                    </div>
-                </div>
-
-                <div id="cart-items" class="cart-items">
-                    <div id="empty-state" class="empty-state">
-                        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🛍️</div>
-                        <p style="font-weight: 500; color: #1e293b;">Your cart is empty.</p>
-                        <p style="font-size: 0.85rem;">Start adding items from the aisles!</p>
-                    </div>
-                </div>
-
-                <div class="cart-summary">
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span id="cart-subtotal" class="mono">₹0.00</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tax (8%)</span>
-                        <span id="cart-tax" class="mono">₹0.00</span>
-                    </div>
-
-                    <div class="summary-row total-row">
-                        <span>Total Payable</span>
-                        <span id="cart-total" class="mono" style="color:var(--primary);">₹0.00</span>
-                    </div>
-
-                    <div id="budget-progress-container" class="budget-progress-container hidden"
-                        style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">
-                            <span>Budget Tracker</span>
-                            <span id="budget-percentage" class="mono font-weight-bold" style="color: var(--text-main);">0%</span>
-                        </div>
-                        <div style="height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
-                            <div id="progress-bar-fill" style="height: 100%; width: 0%; background: var(--secondary); transition: all 0.3s ease; border-radius: 999px;">
-                            </div>
-                        </div>
-                        <div id="budget-warning" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--warning); text-align: center; font-weight: 600; display:none;">
-                            ⚠️ Approaching Budget Limit!
-                        </div>
-                        <div id="budget-danger" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--danger); text-align: center; font-weight: 600; display:none;">
-                            🛑 Budget Exceeded! Please review items.
-                        </div>
-                    </div>
-
-                    <button id="checkout-btn" class="btn-checkout" disabled>
-                        <span>Confirm Payment</span>
-                    </button>
-                </div>
-            </section>
-        </main>
+{% block content %}
+<header class="app-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 1.25rem; border-bottom: none; background: transparent; box-shadow: none; width: 100%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <a href="{{ url_for('customer.customer_view') }}" class="logo" style="gap: 0.5rem; text-decoration: none;">
+            <div class="logo-icon" style="width: 28px; height: 28px; font-size: 0.85rem;"></div>
+            <h1 style="font-size: 1.25rem; letter-spacing: -0.02em; color: #f1f5f9;">SmartMart</h1>
+        </a>
+        
+        <button class="premium-profile-fab" onclick="openProfileModal()" title="My Profile">
+            {{ (user.full_name or username)[0] | upper }}
+        </button>
     </div>
 
-    <div id="budget-modal" class="modal hidden">
-        <div class="modal-content scale-in">
-            <h2>Set Shopping Budget</h2>
-            <p>We'll track your cart total automatically against your budget to help you manage expenses.</p>
-            <div class="input-group">
-                <span class="currency-prefix">₹</span>
-                <input type="number" id="budget-input" placeholder="0.00" min="1" step="0.01" style="padding-left: 2rem;">
+    <div class="filter-bar">
+        <div class="modern-search-box">
+            <span class="search-icon" style="opacity: 0.6; font-size: 1.1rem;">🔍</span>
+            <input type="text" id="search-input" class="modern-input" placeholder="Search groceries, brands...">
+        </div>
+        <button class="header-budget-btn" onclick="window.budgetSource = 'header'; document.getElementById('budget-modal').classList.remove('hidden'); document.getElementById('budget-input').focus();">
+            <span class="hbb-icon">💰</span>
+            <span class="hbb-amount" id="header-budget-display-text">Set Limit</span>
+        </button>
+    </div>
+</header>
+
+<main class="main-content">
+    <section class="catalog-section">
+
+        <div class="promo-carousel-wrapper">
+            <div class="promo-slider" id="promo-slider">
+                <div class="promo-slide">
+                    <div class="promo-content">
+                        <span class="promo-badge">Limited Time</span>
+                        <h2 style="font-size: 1.2rem;">Fresh Groceries,<br>Delivered Fast.</h2>
+                    </div>
+                    <div class="promo-visual"><div class="promo-glow"></div><span class="promo-emoji">🥑</span></div>
+                </div>
+                <div class="promo-slide">
+                    <div class="promo-content">
+                        <span class="promo-badge" style="background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.4);">Organic</span>
+                        <h2 style="font-size: 1.2rem;">Farm Fresh<br>Vegetables.</h2>
+                    </div>
+                    <div class="promo-visual"><div class="promo-glow" style="background: radial-gradient(circle at center, rgba(245,158,11,0.4) 0%, transparent 70%);"></div><span class="promo-emoji">🥦</span></div>
+                </div>
+                <div class="promo-slide">
+                    <div class="promo-content">
+                        <span class="promo-badge" style="background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.4);">Weekend</span>
+                        <h2 style="font-size: 1.2rem;">Buy 1 Get 1<br>on Snacks.</h2>
+                    </div>
+                    <div class="promo-visual"><div class="promo-glow" style="background: radial-gradient(circle at center, rgba(16,185,129,0.4) 0%, transparent 70%);"></div><span class="promo-emoji">🍪</span></div>
+                </div>
             </div>
-            <div class="modal-actions">
-                <button id="cancel-budget" class="btn-secondary">Cancel</button>
-                <button id="save-budget" class="btn-primary">Save Budget</button>
+            <div class="slider-dots" id="slider-dots">
+                <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
             </div>
+        </div>
+
+        <h3 class="section-title">Categories</h3>
+        <div class="category-tabs horizontal-scroll" id="category-tabs">
+            </div>
+
+        
+        <div id="product-grid" class="product-grid modern-grid">
+            <div class="empty-state">
+                <div class="loader"></div>
+                <p>Loading premium selection...</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="cart-section">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <span id="cart-item-count" class="badge">0</span>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <div style="flex: 1; background: var(--bg-glass); padding: 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border); text-align: center;">
+                <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Items</span>
+                <div id="stat-total-items" style="font-size: 1.2rem; font-weight: bold; color: var(--text-main);">0</div>
+            </div>
+            <div style="flex: 1; background: var(--bg-glass); padding: 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border); text-align: center;">
+                <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Weight</span>
+                <div id="cart-weight" style="font-size: 1.2rem; font-weight: bold; color: var(--text-main);">0g</div>
+            </div>
+        </div>
+
+        <div id="cart-items" class="cart-items">
+            <div id="empty-state" class="empty-state">
+                <div style="font-size: 2.5rem;">🛍️</div>
+                <p style="color: var(--text-main); font-weight: 600;">Basket empty</p>
+            </div>
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-row"><span>Subtotal</span><span id="cart-subtotal" class="mono">₹0.00</span></div>
+            <div class="summary-row"><span>Tax (8%)</span><span id="cart-tax" class="mono">₹0.00</span></div>
+            <div class="summary-row total-row"><span>Total Payable</span><span id="cart-total" class="mono">₹0.00</span></div>
+
+            <div id="budget-progress-container" class="budget-tracker hidden">
+                <div class="budget-header">
+                    <span>Budget Tracker</span>
+                    <span id="budget-percentage" class="mono">0%</span>
+                </div>
+                <div class="progress-bg"><div id="progress-bar-fill" class="progress-fill"></div></div>
+                <div id="budget-warning" style="display:none; color: var(--warning); font-size: 0.8rem; margin-top: 0.5rem; text-align: center;">⚠️ Approaching Limit</div>
+                <div id="budget-danger" style="display:none; color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem; text-align: center;">🛑 Budget Exceeded</div>
+            </div>
+
+            <button id="checkout-btn" class="btn-checkout" disabled>Confirm Payment</button>
+        </div>
+    </section>
+    <div id="cart-sheet-backdrop" class="cart-sheet-backdrop" onclick="closeMobileCart()"></div>
+
+    <div id="sticky-budget-bar" class="sticky-budget-bar hidden" onclick="document.getElementById('budget-modal').classList.remove('hidden'); document.getElementById('budget-input').focus();" style="cursor: pointer;">
+        <div class="sbb-inner">
+            <span class="sbb-label">Budget Remaining</span>
+            <span id="sbb-amount" class="sbb-amount">₹0.00</span>
+            <div id="sbb-warning-container" class="sbb-warning" style="display:none;">⚠️</div>
+        </div>
+        <div class="sbb-fill-track">
+            <div id="sbb-fill" class="sbb-fill"></div>
         </div>
     </div>
 
-    <div id="checkout-modal" class="modal hidden">
-        <div class="modal-content scale-in" style="text-align: center;">
-            <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                <circle class="checkmark_circle" cx="26" cy="26" r="25" fill="none" />
-                <path class="checkmark_check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+    <nav class="mobile-bottom-nav">
+        <button class="nav-item active" onclick="closeMobileCart()">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Shop</span>
+        </button>
+        
+        <button class="nav-item scan-nav-btn scan-trigger" onclick="closeMobileCart()">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                <line x1="7" y1="12" x2="17" y2="12"></line>
             </svg>
-
-            <h2 style="margin-top: 1.5rem;">Payment Successful!</h2>
-            <p>Your items and digital receipt have been saved securely.</p>
-
-            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem; color: var(--text-main);">
-                Total Paid: <span id="final-paid-amount" class="mono" style="color:var(--primary);"></span>
+        </button>
+        
+        <button class="nav-item" onclick="toggleMobileCart()">
+            <div style="position:relative;">
+                <span class="nav-icon">🛍️</span>
+                <span id="bottom-nav-badge" class="nav-badge" style="display:none;">0</span>
             </div>
+            <span class="nav-label">Cart</span>
+        </button>
+    </nav>
+</main>
 
-            <div style="background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                <div style="color:var(--text-muted); font-size:0.9rem; font-weight: 500; text-transform: uppercase;">
-                    Exit Verification Code</div>
-                <div id="receipt-qr" style="font-size: 2.5rem; font-weight: 700; font-family:var(--font-mono); color: var(--text-main); margin-top: 0.5rem; letter-spacing: 2px;">
-                    #</div>
-            </div>
-
-            <p style="color: var(--secondary); font-weight: 500; font-size: 0.95rem;">Please proceed to the exit staff for final weight validation using this code.</p>
-
-            <button id="new-trip-btn" class="btn-primary" style="margin-top:1.5rem; width: 100%;">Close</button>
+<div id="budget-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Set Budget</h2>
+        <div class="input-group">
+            <span class="currency-prefix">₹</span>
+            <input type="number" id="budget-input" placeholder="0.00" min="1" step="0.01">
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="handleBudgetBack()">Back</button>
+            <button id="save-budget" class="btn-primary">Save Limit</button>
         </div>
     </div>
+</div>
 
-    <div id="scanner-modal" class="modal hidden">
-        <div class="modal-content scale-in" style="max-width: 400px; text-align: center;">
-            <h2 style="margin-bottom: 0.5rem;">Scan Product</h2>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;">Point your camera at the SmartMart QR code</p>
-            
-            <div id="reader" style="width: 100%; border-radius: 0.5rem; overflow: hidden; box-shadow: inset 0 0 0 1px var(--border);"></div>
-            
-            <button id="close-scanner-btn" class="btn-secondary" style="margin-top: 1.5rem; width: 100%;">Cancel Scanning</button>
-        </div>
+<div id="scanner-modal" class="modal hidden">
+    <div class="modal-content text-center">
+        <h2>Scan Product</h2>
+        <div id="reader" style="border-radius: 10px; overflow: hidden; margin: 1.5rem 0;"></div>
+        <button id="close-scanner-btn" class="btn-secondary" style="width: 100%;">Cancel</button>
     </div>
+</div>
 
-    <div id="profile-modal" class="modal hidden">
-        <div class="modal-content scale-in" style="max-width: 550px; padding: 3rem; max-height: 90vh; overflow-y: auto;">
-            <h2 style="margin-bottom: 0.5rem; font-size: 1.8rem; color: #1e293b;">My Profile</h2>
-            <p style="color: #64748b; margin-bottom: 2rem;">Your details are locked for security. Unlock to edit.</p>
-            
+<div id="checkout-modal" class="modal hidden">
+    <div class="modal-content text-center">
+        <h2>Payment Successful!</h2>
+        <div style="font-size: 1.2rem; margin: 1.5rem 0; color: var(--text-muted);">Total Paid: <span id="final-paid-amount" class="mono" style="color: var(--text-main); font-weight: bold; font-size: 1.5rem;"></span></div>
+        <div id="receipt-qr" style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;"></div>
+        <button id="new-trip-btn" class="btn-primary" style="width: 100%;">Close</button>
+    </div>
+</div>
+
+<div id="profile-modal" class="modal hidden">
+    <div class="modal-content">
+        <div id="hub-view">
+            <div class="profile-hub-hero">
+                <div class="profile-avatar">{{ (user.full_name or username)[0] | upper }}</div>
+                <div class="profile-hub-info">
+                    <span class="profile-hub-name">{{ user.full_name or username }}</span>
+                    <span class="profile-hub-email">{{ user.email or 'No email provided' }}</span>
+                </div>
+                <button class="profile-edit-btn" onclick="toggleProfileView('edit')" title="Edit Profile">✎</button>
+            </div>
+
+            <span class="account-section-label">Account</span>
+            <div class="account-menu-list">
+                <div class="account-menu-group">
+                    <a href="{{ url_for('customer.my_orders') }}" class="account-menu-item">
+                        <div class="ami-icon">📦</div>
+                        <div class="ami-body">
+                            <span class="ami-label">My Orders</span>
+                            <span class="ami-sub">Track and view digital receipts</span>
+                        </div>
+                        <div class="ami-chevron"></div>
+                    </a>
+                    <button onclick="closeAppModal('profile-modal'); openSupportModal();" class="account-menu-item">
+                        <div class="ami-icon">🎧</div>
+                        <div class="ami-body">
+                            <span class="ami-label">Help & Support</span>
+                            <span class="ami-sub">Get assistance or report an issue</span>
+                        </div>
+                        <div class="ami-chevron"></div>
+                    </button>
+                </div>
+            </div>
+
+            <span class="account-section-label">Preferences</span>
+            <div class="account-menu-list">
+                <div class="account-menu-group">
+                    <button onclick="window.budgetSource = 'profile'; closeAppModal('profile-modal'); document.getElementById('budget-modal').classList.remove('hidden');" class="account-menu-item">
+                        <div class="ami-icon">💰</div>
+                        <div class="ami-body">
+                            <span class="ami-label">Budget Settings</span>
+                            <span class="ami-sub">Adjust your spending limits</span>
+                        </div>
+                        <div class="ami-value" id="hub-budget-value">Not Set</div>
+                        <div class="ami-chevron"></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="account-menu-list" style="margin-top: 1.5rem;">
+                <div class="account-menu-group">
+                    <a href="#" class="account-menu-item danger" onclick="localStorage.clear(); window.location.href='/logout'; return false;">
+                        <div class="ami-icon">🚪</div>
+                        <div class="ami-body">
+                            <span class="ami-label">Secure Logout</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="profile-hub-footer">
+                <span>SmartMart App v6.0</span>
+            </div>
+        </div>
+
+        <div id="edit-view" class="hidden" style="padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; font-size: 1.4rem;">Edit Profile</h2>
+                <button type="button" class="btn-secondary" style="padding: 0.4rem 0.8rem;" onclick="handleProfileBack()">Back</button>
+            </div>
             <form id="profile-form">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                    <div class="input-group" style="margin: 0;">
-                        <label style="font-size:0.85rem; color:#475569; font-weight:600; margin-bottom: 8px; display: block;">Full Name</label>
-                        <input type="text" id="prof-name" class="profile-input" disabled value="{{ user.full_name or username }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e1;">
-                    </div>
-                    <div class="input-group" style="margin: 0;">
-                        <label style="font-size:0.85rem; color:#475569; font-weight:600; margin-bottom: 8px; display: block;">Date of Birth</label>
-                        <input type="date" id="prof-dob" class="profile-input" disabled value="{{ user.dob or '' }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e1;">
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                    <div class="input-group" style="margin: 0;">
-                        <label style="font-size:0.85rem; color:#475569; font-weight:600; margin-bottom: 8px; display: block;">Email Address</label>
-                        <input type="email" id="prof-email" class="profile-input" disabled value="{{ user.email or '' }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e1;">
-                    </div>
-                    <div class="input-group" style="margin: 0;">
-                        <label style="font-size:0.85rem; color:#475569; font-weight:600; margin-bottom: 8px; display: block;">Mobile Number</label>
-                        <input type="text" id="prof-mobile" class="profile-input" disabled value="{{ user.mobile or '' }}" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e1;">
-                    </div>
-                </div>
-
-                <div class="input-group" style="margin-bottom: 2rem;">
-                    <label style="font-size:0.85rem; color:#475569; font-weight:600; margin-bottom: 8px; display: block;">Gender</label>
-                    <select id="prof-gender" class="profile-input" disabled style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e1; background: white;">
+                <div class="input-group"><label>Full Name</label><input type="text" id="prof-name" class="profile-input" disabled value="{{ user.full_name or username }}"></div>
+                <div class="input-group"><label>Date of Birth</label><input type="date" id="prof-dob" class="profile-input" disabled value="{{ user.dob or '' }}"></div>
+                <div class="input-group"><label>Email</label><input type="email" id="prof-email" class="profile-input" disabled value="{{ user.email or '' }}"></div>
+                <div class="input-group"><label>Mobile</label><input type="text" id="prof-mobile" class="profile-input" disabled value="{{ user.mobile or '' }}"></div>
+                <div class="input-group">
+                    <label>Gender</label>
+                    <select id="prof-gender" class="profile-input" disabled>
                         <option value="Male" {% if user.gender == 'Male' %}selected{% endif %}>Male</option>
                         <option value="Female" {% if user.gender == 'Female' %}selected{% endif %}>Female</option>
                         <option value="Other" {% if user.gender == 'Other' %}selected{% endif %}>Other</option>
-                        <option value="Prefer not to say" {% if user.gender == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
                     </select>
                 </div>
-
-                <div style="margin-bottom: 2rem; background: #f8fafc; padding: 1.2rem; border-radius: 10px; border: 1px solid #e2e8f0;">
-                    <label style="display: flex; align-items: flex-start; gap: 12px; font-size: 0.9rem; cursor: pointer; color: #334155; line-height: 1.4;">
-                        <input type="checkbox" id="prof-offers" class="profile-input" disabled {% if user.wants_offers != 0 %}checked{% endif %} style="margin-top: 3px; transform: scale(1.2);">
-                        <span>I want to receive special weekend offers and updates via WhatsApp.</span>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display:flex; align-items:center; gap: 10px; color: var(--text-muted); font-size: 0.85rem;">
+                        <input type="checkbox" id="prof-offers" class="profile-input" disabled {% if user.wants_offers != 0 %}checked{% endif %}>
+                        I want weekend offers via WhatsApp.
                     </label>
-                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
-                        By updating your profile, you agree to SmartMart's <a href="#" style="color: #2563eb; text-decoration: none; font-weight: 500;">Terms & Conditions</a>.
-                    </div>
                 </div>
-
-                <div class="input-group hidden" id="profile-password-group" style="margin-bottom: 1.5rem;">
-                    <label style="font-size:0.85rem; color:#dc2626; font-weight:600; margin-bottom: 8px; display: block;">Enter Password to Save Changes</label>
-                    <input type="password" id="prof-password" placeholder="Verify your password" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #fca5a5; box-shadow: 0 0 0 2px #fee2e2;">
-                </div>
-
-                <div class="modal-actions" style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button type="button" class="btn-secondary" onclick="closeAppModal('profile-modal')" style="flex: 1; padding: 0.8rem; font-size: 1rem;">Cancel</button>
-                    <button type="button" id="btn-unlock-profile" class="btn-primary" onclick="unlockProfile()" style="flex: 1; padding: 0.8rem; font-size: 1rem;">🔒 Unlock to Update</button>
-                    <button type="button" id="btn-save-profile" class="btn-primary hidden" onclick="saveProfile()" style="flex: 1; padding: 0.8rem; font-size: 1rem; background: #059669;">✅ Save Changes</button>
+                <div class="input-group hidden" id="profile-password-group"><label style="color: var(--danger);">Enter Password</label><input type="password" id="prof-password"></div>
+                <div class="modal-actions">
+                    <button type="button" id="btn-unlock-profile" class="btn-primary" onclick="unlockProfile()">Unlock</button>
+                    <button type="button" id="btn-save-profile" class="btn-primary hidden" onclick="saveProfile()">Save</button>
                 </div>
             </form>
         </div>
     </div>
-    
-    <div id="support-modal" class="modal hidden">
-        <div class="modal-content scale-in" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
-            <h2 style="margin-bottom: 0.5rem; font-size: 1.8rem; color: #1e293b;">Customer Support</h2>
-            <p style="color: #64748b; margin-bottom: 2rem;">Experiencing an issue? Send us a message and our team will respond shortly.</p>
-            
-            <div class="input-group" style="margin-bottom: 1.5rem;">
-                <label style="font-size:0.85rem; color:#475569; font-weight:600; margin-bottom: 8px; display: block;">Issue Type</label>
-                <select id="support-type" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #cbd5e1; background: white;">
-                    <option value="Cart or Scanning Issue">Cart or Scanning Issue</option>
-                    <option value="Payment Failed">Payment Failed</option>
-                    <option value="Incorrect Item Weight">Incorrect Item Weight</option>
-                    <option value="Other Feedback">Other Feedback</option>
-                </select>
-            </div>
-            <div class="input-group" style="margin-bottom: 1.5rem;">
-                <label style="font-size:0.85rem; color:#475569; font-weight:600; margin-bottom: 8px; display: block;">Message</label>
-                <textarea id="support-message" rows="3" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; font-family: inherit; resize: none; outline: none;" placeholder="Describe your issue..."></textarea>
-            </div>
-            
-            <div class="modal-actions" style="display: flex; gap: 1rem;">
-                <button type="button" class="btn-secondary" onclick="closeAppModal('support-modal')" style="flex: 1; padding: 0.8rem;">Close</button>
-                <button type="button" class="btn-primary" onclick="submitSupport()" style="flex: 1; padding: 0.8rem;">Send Message</button>
-            </div>
+</div>
 
-            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
-            <h3 style="font-size: 1.1rem; color: #1e293b; margin-bottom: 1rem;">My Past Tickets</h3>
-            
-            <div style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
+<div id="support-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Support</h2>
+        <div class="input-group">
+            <label>Issue Type</label>
+            <select id="support-type">
+                <option>Cart or Scanning Issue</option>
+                <option>Payment Failed</option>
+                <option>Incorrect Item Weight</option>
+                <option>Other Feedback</option>
+            </select>
+        </div>
+        <div class="input-group"><label>Message</label><textarea id="support-message" rows="3"></textarea></div>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeAppModal('support-modal'); openProfileModal();">Back</button>
+            <button type="button" class="btn-primary" onclick="submitSupport()">Send</button>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <h3 style="color: var(--text-main); font-size: 1rem; margin-bottom: 0.8rem;">Past Tickets</h3>
+            <div style="max-height: 150px; overflow-y: auto;">
                 {% for t in tickets %}
-                <div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 0.8rem; background: #f8fafc;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span style="font-weight: 600; font-size: 0.85rem; color: #1e293b;">{{ t.issue_type }}</span>
-                        
-                        {% if t.status == 'Open' %}
-                            <span style="color: #dc2626; font-size: 0.8rem; font-weight: 700; background: #fee2e2; padding: 2px 8px; border-radius: 99px;">⏳ Pending</span>
-                        {% else %}
-                            <span style="color: #059669; font-size: 0.8rem; font-weight: 700; background: #dcfce7; padding: 2px 8px; border-radius: 99px;">✅ Resolved</span>
-                        {% endif %}
+                <div style="padding: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 0.5rem; background: var(--bg-glass);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-main);">{{ t.issue_type }}</span>
+                        <span class="status-badge {% if t.status == 'Open' %}status-pending{% else %}status-verified{% endif %}">{{ t.status }}</span>
                     </div>
-                    <p style="font-size: 0.85rem; color: #475569; margin: 0;">{{ t.message }}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">{{ t.message }}</p>
                 </div>
                 {% else %}
-                <p style="font-size: 0.85rem; color: #64748b; text-align: center;">You have no past support tickets.</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">No past tickets.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=2.0"></script>
-</body>
-</html>
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}?v=11.0"></script>
+{% endblock %}

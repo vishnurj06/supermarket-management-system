@@ -104,16 +104,31 @@ function renderProducts() {
         if (!p.image_url.startsWith("http")) {
             imagePath = `/static/images/${p.image_url}`;
         }
+        
+        // 1. Smart Stock Logic
+        const isOutOfStock = p.stock <= 0;
+        let stockBadge = '';
+        if (isOutOfStock) {
+            stockBadge = `<span class="status-badge status-alert" style="margin-left: 0.3rem;">Out of Stock</span>`;
+        } else if (p.stock < 10) {
+            stockBadge = `<span class="low-stock-badge">Low Stock</span>`;
+        }
+
+        // 2. Disable clicks and fade out if out of stock
+        const clickEvent = isOutOfStock ? '' : `onclick="addToCart(${p.id})"`;
+        const cardStyle = isOutOfStock ? 'opacity: 0.5; cursor: not-allowed; filter: grayscale(100%);' : '';
+        const scanIcon = isOutOfStock ? '' : `<div class="scan-action"></div>`;
+
         return `
-        <div class="product-card" onclick="addToCart(${p.id})">
+        <div class="product-card" ${clickEvent} style="${cardStyle}">
             <img class="product-image" src="${imagePath}" alt="${p.name}" onerror="this.src='/static/images/product_placeholder.png'">
             <div class="product-info">
                 <span class="product-name">${p.name}</span>
                 <span class="product-price">${formatCurrency(p.price)}</span>
                 <span class="product-weight">${p.weight_g}g</span>
-                ${p.stock < 10 ? `<span class="low-stock-badge">Low Stock</span>` : ''}
+                <div>${stockBadge}</div>
             </div>
-            <div class="scan-action"></div>
+            ${scanIcon}
         </div>
         `;
     }).join('');
@@ -125,60 +140,83 @@ window.handleImageError = function (img, category) {
 };
 
 function init() {
+    loadFromMemory();
     fetchProducts();
     setupEventListeners();
 }
 
 function setupEventListeners() {
     // Search
-    DOM.searchInput.addEventListener('input', (e) => {
-        state.searchQuery = e.target.value;
-        renderProducts();
-    });
+    if (DOM.searchInput) {
+        DOM.searchInput.addEventListener('input', (e) => {
+            state.searchQuery = e.target.value;
+            renderProducts();
+        });
+    }
 
-    // Budget Modals
-    DOM.setBudgetBtn.addEventListener('click', () => {
-        if (state.budget) DOM.budgetInput.value = state.budget;
-        DOM.budgetModal.classList.remove('hidden');
-        DOM.budgetInput.focus();
-    });
+    // Safely handle old desktop buttons if they exist
+    if (DOM.setBudgetBtn) {
+        DOM.setBudgetBtn.addEventListener('click', () => {
+            window.budgetSource = 'header';
+            if (state.budget) DOM.budgetInput.value = state.budget;
+            DOM.budgetModal.classList.remove('hidden');
+            DOM.budgetInput.focus();
+        });
+    }
 
-    DOM.globalBudgetDisplay.addEventListener('click', () => {
-        DOM.budgetInput.value = state.budget || '';
-        DOM.budgetModal.classList.remove('hidden');
-        DOM.budgetInput.focus();
-    });
+    if (DOM.globalBudgetDisplay) {
+        DOM.globalBudgetDisplay.addEventListener('click', () => {
+            window.budgetSource = 'header';
+            DOM.budgetInput.value = state.budget || '';
+            DOM.budgetModal.classList.remove('hidden');
+            DOM.budgetInput.focus();
+        });
+    }
 
-    DOM.cancelBudgetBtn.addEventListener('click', () => {
-        DOM.budgetModal.classList.add('hidden');
-    });
+    // Modal Actions
+    if (DOM.cancelBudgetBtn) {
+        DOM.cancelBudgetBtn.addEventListener('click', () => {
+            DOM.budgetModal.classList.add('hidden');
+        });
+    }
 
-    DOM.saveBudgetBtn.addEventListener('click', saveBudget);
-    DOM.budgetInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') saveBudget();
-    });
+    if (DOM.saveBudgetBtn) {
+        DOM.saveBudgetBtn.addEventListener('click', saveBudget);
+    }
 
-    DOM.budgetModal.addEventListener('click', (e) => {
-        if (e.target === DOM.budgetModal) DOM.budgetModal.classList.add('hidden');
-    });
+    if (DOM.budgetInput) {
+        DOM.budgetInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveBudget();
+        });
+    }
 
-    DOM.checkoutBtn.addEventListener('click', processCheckout);
+    if (DOM.budgetModal) {
+        DOM.budgetModal.addEventListener('click', (e) => {
+            if (e.target === DOM.budgetModal) DOM.budgetModal.classList.add('hidden');
+        });
+    }
+
+    if (DOM.checkoutBtn) DOM.checkoutBtn.addEventListener('click', processCheckout);
 
     // Checkout Modal Reset Logic
-    DOM.newTripBtn.addEventListener('click', () => {
-        DOM.checkoutModal.classList.add('hidden');
-        window.location.href = '/customer'; // redirect natively to customer DB
-    });
-
-    DOM.checkoutModal.addEventListener('click', (e) => {
-        if (e.target === DOM.checkoutModal) {
+    if (DOM.newTripBtn) {
+        DOM.newTripBtn.addEventListener('click', () => {
             DOM.checkoutModal.classList.add('hidden');
-            window.location.href = '/customer';
-        }
-    });
+            window.location.href = '/customer'; 
+        });
+    }
+
+    if (DOM.checkoutModal) {
+        DOM.checkoutModal.addEventListener('click', (e) => {
+            if (e.target === DOM.checkoutModal) {
+                DOM.checkoutModal.classList.add('hidden');
+                window.location.href = '/customer';
+            }
+        });
+    }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !DOM.checkoutModal.classList.contains('hidden')) {
+        if (e.key === 'Escape' && DOM.checkoutModal && !DOM.checkoutModal.classList.contains('hidden')) {
             DOM.checkoutModal.classList.add('hidden');
             window.location.href = '/customer';
         }
@@ -193,18 +231,6 @@ function playScanSound() {
     if (navigator.vibrate) navigator.vibrate(50);
 }
 
-function saveBudget() {
-    const val = parseFloat(DOM.budgetInput.value);
-    if (!isNaN(val) && val > 0) {
-        state.budget = val;
-
-        DOM.setBudgetBtn.style.display = 'none';
-        DOM.globalBudgetDisplay.style.display = 'flex';
-
-        updateCartUI();
-        DOM.budgetModal.classList.add('hidden');
-    }
-}
 
 window.addToCart = function (productId) {
     const product = state.products.find(p => p.id === productId);
@@ -231,6 +257,8 @@ window.addToCart = function (productId) {
     console.log("Cart before:", state.cart);
 
     renderCart();
+
+    saveToMemory();
 };
 
 window.updateQty = function (productId, delta) {
@@ -251,6 +279,7 @@ window.updateQty = function (productId, delta) {
         }
         renderCart();
     }
+    saveToMemory();
 };
 
 function getCartTotals() {
@@ -264,52 +293,7 @@ function getCartTotals() {
     const total = subtotal + tax;
     return { subtotal, tax, total, weight };
 }
-
-function updateCartUI() {
-    const { subtotal, tax, total, weight } = getCartTotals();
-    const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-
-    // Update numbers
-    DOM.cartItemCount.textContent = totalItems.toString();
-    DOM.statTotalItems.textContent = totalItems.toString();
-    DOM.cartWeight.textContent = weight + 'g';
-    DOM.cartSubtotal.textContent = formatCurrency(subtotal);
-    DOM.cartTax.textContent = formatCurrency(tax);
-    DOM.cartTotal.textContent = formatCurrency(total);
-
-    // Update List
-    if (state.cart.length === 0) {
-        DOM.checkoutBtn.disabled = true;
-    } else {
-        DOM.checkoutBtn.disabled = false;
-    }
-
-    // Update Budget Logic
-    if (state.budget) {
-        DOM.budgetProgressContainer.classList.remove('hidden');
-        const remaining = state.budget - total;
-        DOM.budgetAmountDisplay.textContent = formatCurrency(remaining);
-
-        const percentage = Math.min((total / state.budget) * 100, 100);
-        DOM.progressBarFill.style.width = `${percentage}% `;
-        DOM.budgetPercentage.textContent = `${percentage.toFixed(0)}% `;
-
-        DOM.globalBudgetDisplay.classList.remove('warning', 'danger');
-        DOM.progressBarFill.style.backgroundColor = 'var(--primary)';
-        DOM.budgetWarning.style.display = 'none';
-        DOM.budgetDanger.style.display = 'none';
-
-        if (percentage >= 100) {
-            DOM.globalBudgetDisplay.classList.add('danger');
-            DOM.progressBarFill.style.backgroundColor = 'var(--danger)';
-            DOM.budgetDanger.style.display = 'block';
-        } else if (percentage >= 80) {
-            DOM.globalBudgetDisplay.classList.add('warning');
-            DOM.progressBarFill.style.backgroundColor = 'var(--warning)';
-            DOM.budgetWarning.style.display = 'block';
-        }
-    }
-}
+   
 
 async function processCheckout() {
     DOM.checkoutBtn.disabled = true;
@@ -355,7 +339,7 @@ async function processCheckout() {
             <img src="${qrUrl}" alt="Exit QR Code" style="border-radius: 8px; border: 4px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 0 auto; display: block; width: 150px;">
             <div style="font-size: 1.2rem; margin-top: 10px; color: #1e293b; font-weight: bold; text-align: center;">#${finalExitCode}</div>
             
-            <button onclick="window.print()" style="margin-top: 20px; background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%;">
+            <button onclick="printCurrentReceipt('${finalExitCode}')" style="margin-top: 20px; background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%;">
                 📄 Download / Print Receipt
             </button>
             <style>
@@ -371,8 +355,14 @@ async function processCheckout() {
         
         DOM.checkoutModal.classList.remove('hidden');
 
+        // NEW: Automatically slide down the mobile cart sheet
+        if (typeof closeMobileCart === 'function') {
+            closeMobileCart();
+        }
+
         state.cart = [];
         updateCartUI();
+        saveToMemory();
 
     } catch (err) {
         alert("Checkout failed: " + err.message);
@@ -414,14 +404,14 @@ function renderCart() {
 
                 cartItem.innerHTML = `
                     <img src="${imagePath}" class="cart-thumb" onerror="this.src='/static/images/product_placeholder.png'">
-                    <div class="cart-info">
+                    <div class="cart-details">
                         <div class="cart-title">${item.name}</div>
-                        <div class="cart-meta">₹${item.price} • ${item.weight_g}g</div>
+                        <div class="cart-price">₹${item.price} • ${item.weight_g}g</div>
                     </div>
-                    <div class="cart-controls" style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 8px;">
-                        <button onclick="updateQty(${item.id}, -1)" style="width: 28px; height: 28px; border: none; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">-</button>
-                        <span style="font-weight: 600; width: 20px; text-align: center; font-size: 0.9rem;">${item.quantity}</span>
-                        <button onclick="updateQty(${item.id}, 1)" style="width: 28px; height: 28px; border: none; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">+</button>
+                    <div class="cart-qty">
+                        <button onclick="updateQty(${item.id}, -1)">-</button>
+                        <span class="item-qty">${item.quantity}</span>
+                        <button onclick="updateQty(${item.id}, 1)">+</button>
                     </div>
                 `;
 
@@ -439,40 +429,37 @@ document.addEventListener("DOMContentLoaded", () => {
     initDOM();
     init();
     renderCart();
+    initPromoSlider();
 });
 
 // ==========================================
 // QR CODE SCANNER LOGIC
 // ==========================================
 const scannerModal = document.getElementById('scanner-modal');
-const startScanBtn = document.getElementById('start-scan-btn');
 const closeScanBtn = document.getElementById('close-scanner-btn');
 let html5QrCode;
 
-if (startScanBtn && scannerModal) {
-    startScanBtn.addEventListener('click', () => {
-        scannerModal.classList.remove('hidden');
-        
-        // Initialize the scanner
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: "environment" }, // Prefer back camera on phones
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 }
-            },
-            (decodedText, decodedResult) => {
-                // SUCCESSFUL SCAN!
-                html5QrCode.stop(); // Turn off camera
+if (scannerModal) {
+    // Attach the camera logic to ALL scan buttons (Desktop + Mobile)
+    document.querySelectorAll('.scan-trigger').forEach(btn => {
+        btn.addEventListener('click', () => {
+            scannerModal.classList.remove('hidden');
+            
+            // Initialize the scanner
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText, decodedResult) => {
+                    html5QrCode.stop(); // Turn off camera
+                    scannerModal.classList.add('hidden');
+                    handleSuccessfulScan(decodedText);
+                },
+                (errorMessage) => { /* Ignore background frame errors */ }
+            ).catch((err) => {
+                alert("Camera access denied or not available. Please allow camera permissions.");
                 scannerModal.classList.add('hidden');
-                handleSuccessfulScan(decodedText);
-            },
-            (errorMessage) => {
-                // Ignore background frame errors, it happens constantly while searching for a QR code
-            }
-        ).catch((err) => {
-            alert("Camera access denied or not available. Please allow camera permissions.");
-            scannerModal.classList.add('hidden');
+            });
         });
     });
 
@@ -507,19 +494,29 @@ async function handleSuccessfulScan(scannedText) {
     // Add it to the JS Cart exactly as if the user clicked it!
     addToCart(product.id);
 
-    // Flash a nice success message on the button
-    const scanBtn = document.getElementById('start-scan-btn');
-    const originalText = scanBtn.innerHTML;
+    // NEW: Premium Toast Notification!
+    const shortName = product.name.length > 18 ? product.name.substring(0, 18) + '...' : product.name;
     
-    scanBtn.innerHTML = `✅ ${product.name} Added!`;
-    scanBtn.style.background = '#059669'; // Turn button green
-    scanBtn.style.color = 'white';
+    // Create the toast element if it doesn't exist
+    let toast = document.getElementById('premium-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'premium-toast';
+        toast.className = 'premium-toast';
+        document.body.appendChild(toast);
+    }
     
-    // Change the button back to normal after 2 seconds
+    // Set the text and slide it down
+    toast.innerHTML = `✅ <span style="margin-left: 5px;">${shortName} Added</span>`;
+    
+    // Force reflow and add the 'show' class to trigger CSS animation
+    void toast.offsetWidth; 
+    toast.classList.add('show');
+    
+    // Slide it back up after 2.5 seconds
     setTimeout(() => {
-        scanBtn.innerHTML = originalText;
-        scanBtn.style.background = 'var(--text-main)';
-    }, 2000);
+        toast.classList.remove('show');
+    }, 2500);
 }
 
 // --- Modal Visibility Controls ---
@@ -542,13 +539,16 @@ function unlockProfile() {
 }
 
 // --- Real AJAX Save Profile ---
-async function saveProfile() {
-    const password = document.getElementById('prof-password').value;
-    if (!password) {
+async function saveProfile(event) {
+    if (event) event.preventDefault(); 
+
+    const passwordField = document.getElementById('prof-password');
+    if (!passwordField.value) {
         alert("Password is required to save changes.");
         return;
     }
 
+    // --- (Your fetch payload logic remains the same) ---
     const payload = {
         full_name: document.getElementById('prof-name').value,
         dob: document.getElementById('prof-dob').value,
@@ -556,7 +556,7 @@ async function saveProfile() {
         mobile: document.getElementById('prof-mobile').value,
         gender: document.getElementById('prof-gender').value,
         wants_offers: document.getElementById('prof-offers').checked,
-        password: password
+        password: passwordField.value
     };
 
     try {
@@ -571,24 +571,31 @@ async function saveProfile() {
         if (result.success) {
             alert("Profile successfully updated!");
             
-            // Re-lock the UI
+            // Re-lock the fields and toggle buttons
             document.querySelectorAll('.profile-input').forEach(input => input.disabled = true);
             document.getElementById('profile-password-group').classList.add('hidden');
             document.getElementById('btn-unlock-profile').classList.remove('hidden');
             document.getElementById('btn-save-profile').classList.add('hidden');
-            document.getElementById('prof-password').value = ''; // clear password
+            passwordField.value = ''; 
+
+            // SUCCESS STATE: Stay on the Edit Profile tab but in "Locked" mode
+            // This prevents the "Double Menu" glitch you saw in the screenshot
+            const hubView = document.getElementById('hub-view');
+            const editView = document.getElementById('edit-profile-view');
             
-            closeAppModal('profile-modal');
+            if (editView) editView.classList.remove('hidden');
+            if (hubView) hubView.classList.add('hidden');
+
         } else {
             alert("Update failed: " + result.message);
         }
     } catch (error) {
         console.error("Error:", error);
-        alert("A network error occurred.");
     }
 }
 
 // --- Real AJAX Submit Support ---
+// --- Real AJAX Submit Support (Upgraded) ---
 async function submitSupport() {
     const type = document.getElementById('support-type').value;
     const msg = document.getElementById('support-message').value;
@@ -608,9 +615,42 @@ async function submitSupport() {
         const result = await response.json();
         
         if (result.success) {
-            alert("Message sent successfully! Our team will review it.");
-            document.getElementById('support-message').value = ''; // Clear box
-            closeAppModal('support-modal');
+            // 1. Show the Premium Toast instead of an alert
+            let toast = document.getElementById('premium-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'premium-toast';
+                toast.className = 'premium-toast';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `✅ <span style="margin-left: 5px;">Ticket Submitted</span>`;
+            void toast.offsetWidth; 
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+
+            // 2. Instantly inject the new ticket into the UI
+            const ticketsContainer = document.querySelector('#support-modal .modal-content > div:last-child > div');
+            if (ticketsContainer) {
+                // Clear the "No past tickets" message if it's the first ticket
+                const emptyMsg = ticketsContainer.querySelector('p');
+                if (emptyMsg) emptyMsg.remove();
+
+                // Create and prepend the new ticket
+                const newTicket = document.createElement('div');
+                newTicket.style.cssText = "padding: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 0.5rem; background: var(--bg-glass); animation: fadeSlideUp 0.3s ease;";
+                newTicket.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-main);">${type}</span>
+                        <span class="status-badge status-pending">OPEN</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">${msg}</p>
+                `;
+                ticketsContainer.insertBefore(newTicket, ticketsContainer.firstChild);
+            }
+
+            // 3. Clear the text box, but DO NOT close the modal
+            document.getElementById('support-message').value = ''; 
+            
         } else {
             alert("Failed to send: " + result.message);
         }
@@ -619,3 +659,352 @@ async function submitSupport() {
         alert("A network error occurred.");
     }
 }
+
+// --- Mobile Cart Overlay Logic ---
+window.toggleMobileCart = function() {
+    document.querySelector('.cart-section').classList.toggle('mobile-open');
+    document.body.classList.toggle('no-scroll');
+    document.body.classList.add('cart-open-state');
+    
+    const backdrop = document.getElementById('cart-sheet-backdrop');
+    if (backdrop) backdrop.classList.toggle('visible');
+
+};
+
+window.closeMobileCart = function() {
+    document.querySelector('.cart-section').classList.remove('mobile-open');
+    document.body.classList.remove('no-scroll');
+    document.body.classList.remove('cart-open-state');
+    
+    const backdrop = document.getElementById('cart-sheet-backdrop');
+    if (backdrop) backdrop.classList.remove('visible');
+};
+
+// --- Secure Print Logic ---
+window.printCurrentReceipt = function(exitCode) {
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    const receiptContent = document.getElementById('printable-receipt').innerHTML;
+    const qrImage = document.getElementById('receipt-qr').querySelector('img').src;
+
+    printWindow.document.write(`
+        <html><head><title>Receipt #${exitCode}</title></head>
+        <body style="font-family:sans-serif; padding:20px; max-width:400px; margin:0 auto; color:#333;">
+            ${receiptContent}
+            <div style="text-align:center; margin-top:30px;">
+                <img src="${qrImage}" style="width: 150px; height: 150px;" />
+                <div style="font-size: 1.2rem; margin-top: 10px; font-weight: bold; color: #1e293b;">#${exitCode}</div>
+            </div>
+            <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body></html>
+    `);
+};
+
+// --- Profile Hub View Toggle ---
+window.toggleProfileView = function(view) {
+    if (view === 'edit') {
+        document.getElementById('hub-view').classList.add('hidden');
+        document.getElementById('edit-view').classList.remove('hidden');
+    } else {
+        document.getElementById('edit-view').classList.add('hidden');
+        document.getElementById('hub-view').classList.remove('hidden');
+        
+        // Re-lock the form when going back
+        document.querySelectorAll('.profile-input').forEach(input => input.disabled = true);
+        document.getElementById('profile-password-group').classList.add('hidden');
+        document.getElementById('btn-unlock-profile').classList.remove('hidden');
+        document.getElementById('btn-save-profile').classList.add('hidden');
+    }
+};
+
+// --- Profile Reset Fix ---
+window.closeProfileModal = function() {
+    // 1. Physically close the modal
+    const modal = document.getElementById('profile-modal');
+    if (modal) modal.classList.add('hidden');
+
+    // 2. Reset the views so it's clean for the next time it opens
+    const hubView = document.getElementById('hub-view');
+    const editView = document.getElementById('edit-profile-view');
+    
+    if (hubView) hubView.classList.remove('hidden');
+    if (editView) editView.classList.add('hidden');
+};
+
+// --- Browser Memory (Keeps Cart & Budget on Refresh) ---
+function saveToMemory() {
+    localStorage.setItem('smartmart_cart', JSON.stringify(state.cart));
+    
+    // LOGIC FIX: Delete the file if budget is empty
+    if (state.budget && state.budget > 0) {
+        localStorage.setItem('smartmart_budget', state.budget);
+    } else {
+        localStorage.removeItem('smartmart_budget');
+    }
+}
+
+function loadFromMemory() {
+    const savedCart = localStorage.getItem('smartmart_cart');
+    const savedBudget = localStorage.getItem('smartmart_budget');
+    
+    if (savedCart) state.cart = JSON.parse(savedCart);
+    
+    if (savedBudget) {
+        const parsed = parseFloat(savedBudget);
+        if (!isNaN(parsed) && parsed > 0) state.budget = parsed;
+    }
+}
+
+// --- Global Modal Backdrop Click ---
+// Automatically close any modal when the dark background is clicked
+document.addEventListener('click', (e) => {
+    // If the element clicked has the class 'modal' (which is the dark backdrop)
+    if (e.target.classList.contains('modal')) {
+        closeAppModal(e.target.id);
+        
+        // If they click the background of Edit Profile, reset it to Hub safely
+        if (e.target.id === 'profile-modal') {
+            toggleProfileView('hub'); 
+        }
+    }
+});
+
+// --- Smart Profile Back Button ---
+window.handleProfileBack = function() {
+    const nameInput = document.getElementById('prof-name');
+    
+    if (!nameInput.disabled) {
+        // The form is currently UNLOCKED. Just lock it, don't leave the page.
+        document.querySelectorAll('.profile-input').forEach(input => input.disabled = true);
+        document.getElementById('profile-password-group').classList.add('hidden');
+        document.getElementById('btn-unlock-profile').classList.remove('hidden');
+        document.getElementById('btn-save-profile').classList.add('hidden');
+        document.getElementById('prof-password').value = '';
+    } else {
+        // The form is ALREADY LOCKED. Safe to go back to the Hub.
+        toggleProfileView('hub');
+    }
+};
+
+// --- Auto-Sliding Promo Carousel ---
+// --- Auto-Sliding Promo Carousel (Upgraded Engine) ---
+// --- Bulletproof Auto-Sliding Promo Carousel ---
+// --- Auto-Sliding Promo Carousel (Upgraded Engine) ---
+// --- Bulletproof Mathematical Promo Carousel ---
+window.initPromoSlider = function() {
+    const slider = document.getElementById('promo-slider');
+    const dots = document.querySelectorAll('.slider-dots .dot');
+    if (!slider || dots.length === 0) return;
+
+    let totalSlides = dots.length;
+    let autoSlideInterval;
+
+    // 1. Pure Math Dot Updater
+    function updateDots() {
+        // Calculate exactly which slide is visible based on raw scroll pixels
+        let currentIndex = Math.round(slider.scrollLeft / slider.clientWidth);
+        
+        // Safety check to prevent index out of bounds
+        if (currentIndex < 0) currentIndex = 0;
+        if (currentIndex >= totalSlides) currentIndex = totalSlides - 1;
+
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentIndex);
+        });
+    }
+
+    // 2. Listen to the native scroll event (Fires continuously when swiped)
+    slider.addEventListener('scroll', updateDots, { passive: true });
+
+    // 3. Simple Auto-Advance Engine
+    function startAutoSlide() {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(() => {
+            let currentIndex = Math.round(slider.scrollLeft / slider.clientWidth);
+            let nextIndex = (currentIndex + 1) % totalSlides;
+            
+            slider.scrollTo({
+                left: nextIndex * slider.clientWidth,
+                behavior: 'smooth'
+            });
+        }, 3500); // 3.5 seconds
+    }
+
+    // 4. Pause if the user touches the screen
+    slider.addEventListener('touchstart', () => clearInterval(autoSlideInterval), { passive: true });
+    slider.addEventListener('touchend', () => {
+        setTimeout(startAutoSlide, 3000); // Resume 3 seconds after letting go
+    }, { passive: true });
+
+    // Kickstart
+    updateDots();
+    startAutoSlide();
+};
+
+// --- Smart Budget Back Button ---
+window.handleBudgetBack = function() {
+    closeAppModal('budget-modal');
+    if (window.budgetSource === 'profile') {
+        openProfileModal();
+    }
+};
+
+function saveBudget() {
+    const val = parseFloat(DOM.budgetInput.value);
+    
+    // LOGIC FIX: If it's a valid number, save it. Otherwise, CLEAR IT.
+    if (!isNaN(val) && val > 0) {
+        state.budget = val;
+    } else {
+        state.budget = null; 
+    }
+
+    if (DOM.setBudgetBtn) DOM.setBudgetBtn.style.display = 'none';
+    if (DOM.globalBudgetDisplay) DOM.globalBudgetDisplay.style.display = 'flex';
+
+    updateCartUI();
+    if (DOM.budgetModal) DOM.budgetModal.classList.add('hidden');
+    saveToMemory();
+}
+
+function updateCartUI() {
+    const { subtotal, tax, total, weight } = getCartTotals();
+    const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+
+    if (DOM.cartItemCount) DOM.cartItemCount.textContent = totalItems.toString();
+    if (DOM.statTotalItems) DOM.statTotalItems.textContent = totalItems.toString();
+    if (DOM.cartWeight) DOM.cartWeight.textContent = weight + 'g';
+    if (DOM.cartSubtotal) DOM.cartSubtotal.textContent = formatCurrency(subtotal);
+    if (DOM.cartTax) DOM.cartTax.textContent = formatCurrency(tax);
+    if (DOM.cartTotal) DOM.cartTotal.textContent = formatCurrency(total);
+
+    const bottomBadge = document.getElementById('bottom-nav-badge');
+    if(bottomBadge) {
+        bottomBadge.textContent = totalItems.toString();
+        bottomBadge.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+
+    if (DOM.checkoutBtn) {
+        DOM.checkoutBtn.disabled = state.cart.length === 0;
+    }
+
+    // ==========================================
+    // SMART BUDGET TRACKER LOGIC
+    // ==========================================
+    const sbb = document.getElementById('sticky-budget-bar');
+    const sbbAmount = document.getElementById('sbb-amount');
+    const sbbFill = document.getElementById('sbb-fill');
+    const sbbWarning = document.getElementById('sbb-warning-container');
+    const headerBudgetText = document.getElementById('header-budget-display-text');
+
+    // LOGIC FIX: If no budget, actively HIDE all UI elements
+    if (!state.budget || state.budget <= 0) {
+        if (sbb) sbb.classList.add('hidden');
+        if (DOM.budgetProgressContainer) DOM.budgetProgressContainer.classList.add('hidden');
+        if (headerBudgetText) headerBudgetText.textContent = "Set Limit";
+        
+        const hubBudget = document.getElementById('hub-budget-value');
+        if (hubBudget) hubBudget.textContent = 'Not Set';
+        return; // Stop the function here so the old bar doesn't load!
+    }
+
+    // Budget is active: run the math
+    if (headerBudgetText) headerBudgetText.textContent = formatCurrency(state.budget);
+    if (DOM.budgetProgressContainer) DOM.budgetProgressContainer.classList.remove('hidden');
+    
+    const remaining = state.budget - total;
+    const percentage = total === 0 ? 0 : Math.min((total / state.budget) * 100, 100);
+
+    if (DOM.budgetAmountDisplay) DOM.budgetAmountDisplay.textContent = formatCurrency(remaining);
+    if (DOM.progressBarFill) DOM.progressBarFill.style.width = `${percentage}%`;
+    if (DOM.budgetPercentage) DOM.budgetPercentage.textContent = `${percentage.toFixed(0)}%`;
+
+    if (sbb && sbbAmount && sbbFill) {
+        sbb.classList.remove('hidden'); 
+        sbbAmount.textContent = formatCurrency(remaining);
+        sbbFill.style.width = `${percentage}%`;
+        
+        sbb.classList.remove('status-safe', 'status-warning', 'status-danger');
+        
+        if (sbbWarning) {
+            sbbWarning.innerHTML = '';
+            sbbWarning.style.display = 'none';
+        }
+
+        if (percentage >= 100) {
+            sbb.classList.add('status-danger');
+            if (sbbWarning) {
+                sbbWarning.style.display = 'flex';
+                sbbWarning.innerHTML = '🛑 Over';
+            }
+        } else if (percentage >= 80) {
+            sbb.classList.add('status-warning');
+            if (sbbWarning) {
+                sbbWarning.style.display = 'flex';
+                sbbWarning.innerHTML = '⚠️ High';
+            }
+        } else {
+            sbb.classList.add('status-safe');
+        }
+    }
+
+    const hubBudget = document.getElementById('hub-budget-value');
+    if (hubBudget) hubBudget.textContent = formatCurrency(state.budget);
+}
+
+(function () {
+    const cartSheet   = document.querySelector('.cart-section');
+    const budgetBar   = document.getElementById('sticky-budget-bar');
+    const bottomNav   = document.querySelector('.mobile-bottom-nav');
+
+    if (!cartSheet || !budgetBar) return;
+
+    /* Height of the bottom nav (fallback 72px) */
+    const navH = () => (bottomNav ? bottomNav.offsetHeight : 72);
+
+    function liftBudgetBar() {
+        /*
+         * The cart sheet has just received .active but the browser
+         * hasn't painted it yet — its offsetHeight is still 0.
+         *
+         * Strategy: read the height AFTER two animation frames so
+         * the browser has performed layout, then set the CSS custom
+         * property that drives the bar's `bottom` value.
+         */
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const cartH   = cartSheet.offsetHeight;
+                const target  = navH() + cartH;          // px above nav bottom edge
+
+                budgetBar.style.setProperty('--sbb-lifted-bottom', target + 'px');
+                budgetBar.classList.add('cart-open');
+            });
+        });
+    }
+
+    function dropBudgetBar() {
+        /* Remove lifted state — CSS transition glides it back */
+        budgetBar.classList.remove('cart-open');
+        budgetBar.style.removeProperty('--sbb-lifted-bottom');
+    }
+
+    /* ── MutationObserver: watch for .active on the cart sheet ── */
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((m) => {
+            if (m.attributeName !== 'class') return;
+            cartSheet.classList.contains('active')
+                ? liftBudgetBar()
+                : dropBudgetBar();
+        });
+    });
+
+    observer.observe(cartSheet, { attributes: true });
+
+    /* ── Also handle window resize (keyboard open on mobile) ──── */
+    let resizeRaf;
+    window.addEventListener('resize', () => {
+        cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(() => {
+            if (cartSheet.classList.contains('active')) liftBudgetBar();
+        });
+    }, { passive: true });
+})();
