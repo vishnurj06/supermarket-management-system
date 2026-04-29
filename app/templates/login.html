@@ -8,121 +8,451 @@
 
 {% if role in ['admin', 'staff'] %}
 {# ============================================================ #}
-{# ===  LEGACY UI — PRESERVED EXACTLY FOR ADMIN / STAFF     === #}
+{# ===   OBSIDIAN COMMAND CENTER — ADMIN / STAFF LOGIN      === #}
 {# ============================================================ #}
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --bg-body: #e2e8f0;
-            --input-bg: #f8fafc;
+            --obs-bg: #0C0E1A;
+            --obs-accent: #6366F1;
+            --obs-accent-2: #818CF8;
+            --obs-accent-3: #A78BFA;
+            --obs-card: rgba(255,255,255,0.032);
+            --obs-border: rgba(255,255,255,0.08);
+            --obs-text: #F1F5FF;
+            --obs-muted: #6B7494;
+            --obs-muted-2: #9CA3C4;
+            --obs-input-bg: rgba(255,255,255,0.04);
+            --spring: cubic-bezier(0.22, 1, 0.36, 1);
         }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0; padding: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--obs-bg);
             min-height: 100vh;
-        }
-        .app-container {
-            width: 100%; max-width: 400px;
-            background: #0f172a;
-            position: relative;
-            display: flex; flex-direction: column;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            position: relative;
         }
-        @media (min-width: 401px) {
-            .app-container { height: 850px; max-height: 90vh; border-radius: 40px; border: 8px solid #ffffff; }
+
+        /* Film grain */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 0; opacity: 0.45;
         }
-        @media (max-width: 400px) {
-            .app-container { height: 100vh; border-radius: 0; }
+
+        /* Laser grid */
+        body::after {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px);
+            background-size: 64px 64px;
+            mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 100%);
+            pointer-events: none; z-index: 0;
         }
-        .brand-header {
-            padding: 4rem 2rem 5rem 2rem; text-align: center; color: white; position: relative;
+
+        /* Orbs */
+        .obs-orb {
+            position: fixed; border-radius: 50%; pointer-events: none;
+            filter: blur(110px); z-index: 0;
+            animation: orbDrift 20s ease-in-out infinite alternate;
         }
-        .brand-header::before {
-            content: ''; position: absolute; top: -50px; left: -50px;
-            width: 250px; height: 250px;
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, transparent 70%);
-            border-radius: 50%; z-index: 0;
+        .obs-orb-1 {
+            width: 580px; height: 580px; top: -160px; left: -140px;
+            background: radial-gradient(circle, #6366F1, #4F46E5);
+            opacity: 0.16; animation-delay: 0s;
         }
-        .logo-icon { font-size: 4rem; margin-bottom: 1rem; position: relative; z-index: 1; animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .brand-title { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -1px; position: relative; z-index: 1; }
-        .brand-subtitle { color: #94a3b8; font-size: 0.95rem; margin: 0; font-weight: 400; position: relative; z-index: 1; }
-        .form-sheet {
-            background: #ffffff; flex: 1; border-radius: 40px 40px 0 0;
-            padding: 2.5rem 2rem; margin-top: -30px; position: relative; z-index: 10;
-            box-shadow: 0 -10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        .obs-orb-2 {
+            width: 460px; height: 460px; bottom: -110px; right: -110px;
+            background: radial-gradient(circle, #A78BFA, #7C3AED);
+            opacity: 0.14; animation-delay: -7s;
         }
-        .sheet-handle { width: 40px; height: 5px; background: #e2e8f0; border-radius: 10px; margin: 0 auto 2rem auto; }
-        .welcome-text { font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.5rem 0; letter-spacing: -0.5px; }
-        .instruction-text { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 2rem 0; }
-        .input-wrapper { position: relative; margin-bottom: 1.2rem; }
-        .input-icon { position: absolute; left: 1.2rem; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #94a3b8; }
-        .fat-input {
-            width: 100%; padding: 1.2rem 1.2rem 1.2rem 3rem;
-            background: var(--input-bg); border: 2px solid transparent; border-radius: 20px;
-            font-size: 1rem; font-family: inherit; color: var(--text-main); font-weight: 500;
-            box-sizing: border-box; transition: all 0.3s ease;
+        .obs-orb-3 {
+            width: 260px; height: 260px; top: 42%; left: 58%;
+            background: #3DDCE8; opacity: 0.06; filter: blur(120px); animation-delay: -13s;
         }
-        .fat-input:focus { outline: none; background: #ffffff; border-color: var(--primary); box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1); }
-        .fat-input::placeholder { color: #cbd5e1; font-weight: 500; }
-        .forgot-pass { display: block; text-align: right; color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none; margin-bottom: 2rem; margin-top: -0.5rem; }
-        .btn-login {
-            width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none;
-            border-radius: 100px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
-            transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25); margin-top: auto;
+
+        @keyframes orbDrift {
+            from { transform: translate(0,0) scale(1); }
+            to   { transform: translate(28px, 22px) scale(1.07); }
         }
-        .btn-login:hover { transform: translateY(-2px); background: var(--primary-hover); box-shadow: 0 12px 25px rgba(79, 70, 229, 0.35); }
-        .btn-login:active { transform: translateY(0); }
-        .flash-msg { padding: 1rem; border-radius: 16px; margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 600; text-align: center; }
-        .flash-error { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
-        .flash-success { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; }
+
+        /* Page wrapper */
+        .obs-page {
+            position: relative; z-index: 2; width: 100%;
+            display: flex; align-items: center; justify-content: center;
+            padding: 2rem 1rem; min-height: 100vh;
+        }
+
+        /* Glass Card */
+        .obs-card {
+            width: 100%; max-width: 440px;
+            background: var(--obs-card);
+            backdrop-filter: blur(36px) saturate(180%);
+            -webkit-backdrop-filter: blur(36px) saturate(180%);
+            border: 1px solid var(--obs-border);
+            border-radius: 28px;
+            padding: 2.8rem 2.6rem;
+            position: relative; overflow: hidden;
+            opacity: 0; transform: translateY(28px) scale(0.97);
+            animation: cardReveal 0.9s var(--spring) 0.25s forwards;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.05) inset,
+                0 48px 96px rgba(0,0,0,0.65),
+                0 0 120px rgba(99,102,241,0.10);
+        }
+        .obs-card::before {
+            content: '';
+            position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(129,140,248,0.55), rgba(167,139,250,0.45), transparent);
+        }
+        .obs-card::after {
+            content: '';
+            position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+            width: 300px; height: 200px;
+            background: radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        @keyframes cardReveal {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Brand */
+        .obs-brand { 
+            text-align: center; 
+            margin-bottom: 2.2rem; 
+            padding-top: 1rem; /* Gives space since logo moved */
+        }
+
+        /* Moved to Top-Left Corner */
+        .obs-logo-wrap {
+            position: absolute; 
+            top: 2rem; 
+            left: 2rem;
+            display: flex;
+            align-items: center; justify-content: center;
+            width: 48px; height: 48px; border-radius: 14px;
+            background: rgba(99,102,241,0.12);
+            border: 1px solid rgba(99,102,241,0.25);
+            animation: logoFloat 5s ease-in-out infinite;
+            z-index: 10;
+        }
+        .obs-logo-wrap::before {
+            content: ''; position: absolute; inset: -1px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.35), transparent 60%);
+            z-index: -1;
+        }
+        .obs-logo-icon {
+            font-size: 1.4rem;
+            filter: drop-shadow(0 0 12px rgba(99,102,241,0.7));
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50%        { transform: translateY(-7px); }
+        }
+
+        /* Perfectly Centered Badge */
+        .obs-badge {
+            display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+            width: max-content; margin: 0 auto 1.2rem auto;
+            padding: 0.35rem 1rem; border-radius: 99px;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.28);
+            font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--obs-accent-2);
+        }
+        .obs-badge-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #4ADE80;
+            box-shadow: 0 0 8px #4ADE80, 0 0 14px rgba(74,222,128,0.5);
+            animation: pulseDot 2s ease-in-out infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%        { opacity: 0.45; transform: scale(0.8); }
+        }
+
+        .obs-title {
+            font-size: 1.75rem; font-weight: 800;
+            color: var(--obs-text); letter-spacing: -0.04em;
+            margin: 0 0 0.3rem; line-height: 1.15;
+        }
+        .obs-subtitle { font-size: 0.88rem; color: var(--obs-muted); font-weight: 400; }
+
+        /* Flash */
+        .obs-flash {
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 0.85rem 1rem; border-radius: 12px;
+            margin-bottom: 1.4rem; font-size: 0.84rem; font-weight: 600;
+            border-left: 3px solid;
+        }
+        .obs-flash.obs-error {
+            background: rgba(248,113,113,0.10);
+            border-left-color: #F87171; color: #FCA5A5;
+        }
+        .obs-flash.obs-success {
+            background: rgba(74,222,128,0.09);
+            border-left-color: #4ADE80; color: #86EFAC;
+        }
+
+        /* Floating label fields */
+        .obs-field { position: relative; margin-bottom: 1.35rem; }
+
+        .obs-field-label {
+            position: absolute; left: 2.9rem; top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem; font-weight: 500; color: var(--obs-muted);
+            pointer-events: none;
+            transition: all 0.22s var(--spring);
+            transform-origin: left center;
+            padding: 0 0.25rem;
+        }
+        .obs-input:focus ~ .obs-field-label,
+        .obs-input:not(:placeholder-shown) ~ .obs-field-label {
+            top: 0; transform: translateY(-50%) scale(0.78);
+            color: var(--obs-accent-2);
+            background: #0C0E1A; left: 2.6rem;
+        }
+
+        .obs-field-icon {
+            position: absolute; left: 1rem; top: 50%;
+            transform: translateY(-50%); font-size: 1rem;
+            color: var(--obs-muted);
+            transition: color 0.22s var(--spring), transform 0.22s var(--spring);
+            pointer-events: none; z-index: 1;
+        }
+        .obs-field:focus-within .obs-field-icon {
+            color: var(--obs-accent);
+            transform: translateY(-50%) scale(1.12);
+        }
+
+        .obs-input {
+            width: 100%;
+            padding: 1.05rem 1rem 1.05rem 2.9rem;
+            background: var(--obs-input-bg);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.95rem; font-weight: 500;
+            color: var(--obs-text); outline: none;
+            transition: border-color 0.25s var(--spring), background 0.25s var(--spring), box-shadow 0.25s var(--spring);
+        }
+        .obs-input::placeholder { color: transparent; }
+        .obs-input:focus {
+            border-color: rgba(99,102,241,0.55);
+            background: rgba(99,102,241,0.05);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.14), 0 4px 20px rgba(99,102,241,0.08);
+        }
+        .obs-input-pwd { padding-right: 3rem; }
+
+        /* Password toggle */
+        .obs-pwd-toggle {
+            position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer;
+            color: var(--obs-muted); font-size: 1rem;
+            padding: 0; line-height: 1;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .obs-pwd-toggle:hover {
+            color: var(--obs-accent-2);
+            transform: translateY(-50%) scale(1.15);
+        }
+
+        /* Forgot row */
+        .obs-meta { display: flex; justify-content: flex-end; margin-top: -0.6rem; margin-bottom: 1.6rem; }
+        .obs-forgot {
+            font-size: 0.8rem; font-weight: 600;
+            color: var(--obs-accent-2); text-decoration: none;
+            transition: color 0.2s;
+        }
+        .obs-forgot:hover { color: var(--obs-text); }
+
+        /* Submit button with shimmer */
+        .obs-btn {
+            width: 100%; padding: 1.05rem;
+            background: linear-gradient(135deg, var(--obs-accent) 0%, var(--obs-accent-3) 100%);
+            color: #fff; border: none; border-radius: 99px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1rem; font-weight: 700; letter-spacing: 0.02em;
+            cursor: pointer; position: relative; overflow: hidden;
+            box-shadow: 0 8px 32px rgba(99,102,241,0.38);
+            transition: transform 0.25s var(--spring), box-shadow 0.25s var(--spring);
+        }
+        .obs-btn::before {
+            content: ''; position: absolute; top: 0; left: -75%;
+            width: 50%; height: 100%;
+            background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.22) 50%, transparent 100%);
+            transform: skewX(-20deg);
+            transition: left 0.55s var(--spring);
+        }
+        .obs-btn:hover::before { left: 130%; }
+        .obs-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(99,102,241,0.50); }
+        .obs-btn:active { transform: translateY(0); }
+        .obs-btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(rgba(255,255,255,0.12), transparent 55%);
+            pointer-events: none; border-radius: inherit;
+        }
+
+        /* Role chip */
+        .obs-role-chip {
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 1.2rem; gap: 0.4rem;
+            font-size: 0.76rem; color: var(--obs-muted); font-weight: 500;
+        }
+        .obs-role-chip span {
+            padding: 0.2rem 0.7rem;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 99px; color: var(--obs-accent-2);
+            font-weight: 700; font-size: 0.72rem;
+            letter-spacing: 0.06em; text-transform: uppercase;
+        }
+
+        @media (max-width: 500px) {
+            .obs-card { padding: 2.2rem 1.6rem; border-radius: 22px; }
+            .obs-title { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="brand-header">
-            <div class="logo-icon">🛒</div>
-            <h1 class="brand-title">SmartMart</h1>
-            <p class="brand-subtitle">Control everything in one place.</p>
-        </div>
-        <div class="form-sheet">
-            <div class="sheet-handle"></div>
-            <h2 class="welcome-text">Log in</h2>
-            <p class="instruction-text">Sign in to enjoy the best experience.</p>
-            <form action="/login" method="POST" style="display: flex; flex-direction: column; flex: 1;">
+
+    <!-- Ambient orbs -->
+    <div class="obs-orb obs-orb-1" aria-hidden="true"></div>
+    <div class="obs-orb obs-orb-2" aria-hidden="true"></div>
+    <div class="obs-orb obs-orb-3" aria-hidden="true"></div>
+
+    <main class="obs-page" role="main">
+        <div class="obs-card">
+
+            <!-- Brand header -->
+            <div class="obs-brand">
+                <div class="obs-logo-wrap">
+                    <span class="obs-logo-icon">🛡️</span>
+                </div>
+                <div class="obs-badge">
+                    <span class="obs-badge-dot" aria-hidden="true"></span>
+                    Secure Portal
+                </div>
+                <h1 class="obs-title">Command Access</h1>
+                <p class="obs-subtitle">SmartMart Enterprise — Staff &amp; Admin</p>
+            </div>
+
+            <!-- Login Form — backend attributes preserved exactly -->
+            <form action="/login" method="POST" novalidate>
+
+                <!-- Flash messages — Jinja block preserved exactly -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="flash-msg {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
+                            <div class="obs-flash {% if category == 'error' %}obs-error{% else %}obs-success{% endif %}" role="alert">
+                                <span>{% if category == 'error' %}⚠️{% else %}✅{% endif %}</span>
                                 {{ message }}
                             </div>
                         {% endfor %}
                     {% endif %}
                 {% endwith %}
-                <div class="input-wrapper">
-                    <span class="input-icon">👤</span>
-                    <input type="text" id="username" name="username" class="fat-input" placeholder="Username or ID" required autocomplete="off">
+
+                <!-- Username field -->
+                <div class="obs-field">
+                    <span class="obs-field-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </span>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="obs-input"
+                        placeholder="Username or ID"
+                        required
+                        autocomplete="username"
+                        spellcheck="false"
+                    >
+                    <label class="obs-field-label" for="username">Username or ID</label>
                 </div>
-                <div class="input-wrapper">
-                    <span class="input-icon">🔒</span>
-                    <input type="password" id="password" name="password" class="fat-input" placeholder="Password" required>
+
+                <!-- Password field -->
+                <div class="obs-field">
+                    <span class="obs-field-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="obs-input obs-input-pwd"
+                        placeholder="Password"
+                        required
+                        autocomplete="current-password"
+                    >
+                    <label class="obs-field-label" for="password">Password</label>
+                    <button
+                        type="button"
+                        class="obs-pwd-toggle"
+                        id="obs-pwd-toggle-btn"
+                        aria-label="Toggle password visibility"
+                    >
+                        <!-- Eye open icon -->
+                        <svg id="obs-eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <!-- Eye closed icon (hidden by default) -->
+                        <svg id="obs-eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
                 </div>
-                <a href="#" class="forgot-pass">Forgot Password?</a>
-                <button type="submit" class="btn-login">Login</button>
+
+                <!-- Forgot password -->
+                <div class="obs-meta">
+                    <a href="#" class="obs-forgot">Forgot password?</a>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="obs-btn" id="obs-login-btn">
+                    Sign In to Dashboard
+                </button>
             </form>
+
+            <!-- Role chip footer -->
+            <div class="obs-role-chip">
+                Authorized access only &nbsp;·&nbsp;
+                <span>{{ role | title }}</span>
+            </div>
+
         </div>
-    </div>
+    </main>
+
+    <script>
+        // Password show/hide toggle
+        (function() {
+            var btn    = document.getElementById('obs-pwd-toggle-btn');
+            var field  = document.getElementById('password');
+            var eyeOn  = document.getElementById('obs-eye-open');
+            var eyeOff = document.getElementById('obs-eye-closed');
+            if (!btn || !field) return;
+            btn.addEventListener('click', function() {
+                var isHidden = field.type === 'password';
+                field.type   = isHidden ? 'text' : 'password';
+                eyeOn.style.display  = isHidden ? 'none'  : 'block';
+                eyeOff.style.display = isHidden ? 'block' : 'none';
+            });
+        })();
+    </script>
+
 </body>
 </html>
+
 
 {% else %}
 {# ============================================================ #}

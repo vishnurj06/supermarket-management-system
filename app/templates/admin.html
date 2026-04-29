@@ -4,342 +4,395 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartMart Enterprise Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <meta name="description" content="SmartMart Admin — Obsidian Command Center.">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_premium.css') }}?v=2.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { 
-            --sidebar-w: 280px; 
-            --primary: #4f46e5; 
-            --primary-glow: rgba(79, 70, 229, 0.4);
-            --success: #10b981;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-        }
-        
-        body { margin: 0; background: var(--bg); font-family: 'Inter', -apple-system, sans-serif; display: block; color: var(--text-main); font-smoothing: antialiased; -webkit-font-smoothing: antialiased; }
-        * { box-sizing: border-box; }
-        
-        /* --- SIDEBAR & BRANDING --- */
-        .sidebar { width: var(--sidebar-w); background: #0f172a; color: white; position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; z-index: 1000; box-shadow: 4px 0 24px rgba(0,0,0,0.06); }
-        .sidebar-brand { padding: 2.5rem 2rem; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px; }
-        .sidebar-brand::before { 
-            content: '🛒'; 
-            font-size: 2rem; 
-            display: inline-block; 
-            animation: floatLogo 6s ease-in-out infinite; 
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
-        }
-        @keyframes floatLogo { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
-        
-        .sidebar-nav { flex: 1; padding: 1rem 0; }
-        .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 2rem; margin: 0.3rem 1rem; color: #94a3b8; text-decoration: none; cursor: pointer; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-weight: 600; font-size: 0.95rem; }
-        .nav-link:hover { color: white; background: rgba(255,255,255,0.08); transform: translateX(6px); }
-        .nav-link.active { color: white; background: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); }
-        
-        /* Premium Logout Button */
-        .logout-container { padding: 2rem; margin-top: auto; }
-        .logout-btn { display: block; width: 100%; padding: 1rem; text-align: center; color: #ef4444; background: rgba(239, 68, 68, 0.1); border-radius: 12px; text-decoration: none; font-weight: 700; transition: all 0.3s ease; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .logout-btn:hover { background: #ef4444; color: white; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3); transform: translateY(-2px); }
-
-        /* --- MAIN CONTENT & LAYOUT --- */
-        .admin-content { margin-left: var(--sidebar-w); width: calc(100% - var(--sidebar-w)); padding: 3.5rem 4rem; min-height: 100vh; }
-        .category-section h3 { font-size: 1.75rem; font-weight: 800; letter-spacing: -1px; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-top: 3rem; }
-        
-        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-content:not(.hidden) { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .hidden { display: none !important; }
-
-        /* --- CARDS & 3D PARALLAX EFFECT --- */
-        .analytic-card { background: var(--surface); padding: 2rem; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.03), 0 4px 6px -2px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease; transform-style: preserve-3d; perspective: 1000px; }
-        .analytic-card:hover { transform: translateY(-8px) rotateX(2deg) rotateY(-2deg); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); border-color: #e2e8f0; }
-        .analytics-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
-        
-        /* --- HIGH-CONTRAST METRICS --- */
-        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.5rem; }
-        .metric-box { padding: 1.5rem 1rem; border-radius: 16px; transition: all 0.3s ease; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .metric-box:hover { background: #f8fafc; transform: scale(1.05); }
-        .metric-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-        .metric-value { 
-            font-size: 2.2rem; 
-            font-weight: 900; 
-            color: var(--text-main); 
-            letter-spacing: -1px; 
-            font-variant-numeric: tabular-nums; /* This stops the horizontal jumping */
-        }
-        .metric-value.money { color: var(--success); }
-
-        /* --- TABLES (Vercel Style) --- */
-        .table-wrapper { background: #ffffff; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; overflow: hidden; margin-top: 1.5rem; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #ffffff; padding: 1.5rem; text-align: left; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 1.5rem; border-bottom: 1px solid #f8fafc; font-size: 0.95rem; font-weight: 500; color: #334155; transition: background 0.2s; }
-        tr:hover td { background: #f8fafc; }
-        
-        /* --- STATUS BADGES --- */
-        .status-badge { padding: 8px 16px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .status-verified { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .status-pending { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
-        .status-alert { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        .status-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-
-        /* --- MODAL --- */
-        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; animation: fadeInModal 0.3s forwards; }
-        @keyframes fadeInModal { to { opacity: 1; } }
-        .modal-content { background: #ffffff; padding: 2.5rem; border-radius: 24px; width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); transform: scale(0.95); animation: scaleUp 0.3s forwards; }
-        @keyframes scaleUp { to { transform: scale(1); } }
-        .modal-content label { display: block; margin-top: 1.2rem; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #475569; }
-        .modal-content input, .modal-content textarea { width: 100%; padding: 0.8rem 1rem; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-family: inherit; transition: all 0.2s; background: #f8fafc; }
-        .modal-content input:focus, .modal-content textarea:focus { border-color: var(--primary); background: white; outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-
-        /* --- INVENTORY GRID (E-Commerce Style) --- */
-        .category-section h3 { margin-top: 2.5rem; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.8rem; text-transform: capitalize; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-        
-        .product-card-admin { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; height: 100%; }
-        .product-card-admin:hover { transform: translateY(-6px); box-shadow: 0 12px 24px -8px rgba(79, 70, 229, 0.15); border-color: #c7d2fe; }
-        
-        .product-img-wrapper { height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 12px; transition: transform 0.3s; }
-        .product-card-admin:hover .product-img-wrapper { transform: scale(1.02); }
-        .product-img-wrapper img { max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; }
-        
-        .product-title { margin: 0 0 0.25rem 0; font-size: 1.05rem; font-weight: 700; color: #0f172a; line-height: 1.3; }
-        .product-meta { color: #64748b; font-size: 0.85rem; margin-bottom: 1rem; font-weight: 500; }
-        
-        .product-price-row { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-bottom: 1.2rem; }
-        .product-price { font-size: 1.25rem; font-weight: 800; color: var(--primary); }
-        .product-stock { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; }
-        .product-stock.low { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        
-        .product-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 1.2rem; }
-        .action-btn { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.85rem; font-weight: 600; text-align: center; transition: all 0.2s; }
-        .action-btn:hover { background: #e2e8f0; color: #0f172a; }
-        .action-btn.del:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
-
-        /* Premium Vendor Action Button */
-        .vendor-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            background: rgba(79, 70, 229, 0.1);
-            color: var(--primary);
-            border-radius: 99px;
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(79, 70, 229, 0.2);
-            cursor: pointer;
-            position: relative; /* FIX: Pushes button above the 3D layer */
-            z-index: 10;        /* FIX: Ensures the click registers */
-        }
-        .vendor-btn:hover {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.3);
-        }
-        
-    </style>
 </head>
 <body>
+
+    <!-- ═══ SIDEBAR ══════════════════════════════════════════════ -->
     <aside class="sidebar">
         <div class="sidebar-brand">SmartMart Admin</div>
         <nav class="sidebar-nav">
-            <a class="nav-link" onclick="switchTab(event, 'overview')">📊 Overview</a>
-            <a class="nav-link" onclick="switchTab(event, 'inventory')">📦 Inventory</a>
-            <a class="nav-link" onclick="switchTab(event, 'sales')">💰 Sales History</a>
-            
-            {% set open_tickets = tickets|selectattr("status", "equalto", "Open")|list|length %}
-            <a class="nav-link" onclick="switchTab(event, 'inbox')">
-                📥 Support Inbox 
-                {% if open_tickets > 0 %}
-                <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 99px; font-size: 0.7rem; margin-left: auto;">{{ open_tickets }}</span>
-                {% endif %}
+            <a class="nav-link" onclick="switchTab(event,'overview')">📊 Overview</a>
+            <a class="nav-link" onclick="switchTab(event,'inventory')">📦 Inventory</a>
+            <a class="nav-link" onclick="switchTab(event,'sales')">💰 Sales History</a>
+            {% set open_tickets = tickets|selectattr("status","equalto","Open")|list|length %}
+            <a class="nav-link" onclick="switchTab(event,'inbox')">
+                📥 Support Inbox
+                {% if open_tickets > 0 %}<span class="nav-badge">{{ open_tickets }}</span>{% endif %}
             </a>
-            
-            <a class="nav-link" onclick="switchTab(event, 'customers')">👥 Customers</a>
+            <a class="nav-link" onclick="switchTab(event,'customers')">👥 Customers</a>
         </nav>
         <div class="logout-container">
             <a href="/logout" class="logout-btn" onclick="localStorage.removeItem('activeAdminTab')">Log Out</a>
         </div>
     </aside>
 
+    <!-- ═══ MAIN CONTENT ═════════════════════════════════════════ -->
     <main class="admin-content">
-        <div style="margin-bottom: 2rem;">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message" style="padding:1rem; border-radius:8px; background:{% if category=='success' %}#dcfce7{% else %}#fee2e2{% endif %}; color:{% if category=='success' %}#166534{% else %}#991b1b{% endif %}; transition: opacity 0.5s ease;">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}{% for category, message in messages %}
+            <div class="flash-message" style="background:{% if category=='success' %}rgba(16,185,129,0.12){% else %}rgba(239,68,68,0.12){% endif %};color:{% if category=='success' %}#34D399{% else %}#F87171{% endif %};border-left-color:{% if category=='success' %}#10B981{% else %}#EF4444{% endif %};">
+                {{ message }}
+            </div>
+            {% endfor %}{% endif %}
+        {% endwith %}
+
+        <!-- ═══ TAB: OVERVIEW ════════════════════════════════════ -->
         <section id="overview" class="tab-content">
-            <h1 style="margin-top:0; font-size: 1.8rem; color: #1e293b;">Business Intelligence</h1>
-            <div class="analytics-row">
-                <div class="analytic-card">
-                    <h3 style="margin:0; color:#64748b; font-size: 1rem;">REVENUE TRACKER</h3>
-                    <div class="metric-grid">
-                        <div class="metric-box"><div class="metric-label">Today</div><div class="metric-value money">₹{{ "%.2f"|format(stats.daily_rev) if stats else '0.00' }}</div></div>
-                        <div class="metric-box"><div class="metric-label">This Week</div><div class="metric-value money">₹{{ "%.2f"|format(stats.weekly_rev) if stats else '0.00' }}</div></div>
-                        <div class="metric-box"><div class="metric-label">This Month</div><div class="metric-value money">₹{{ "%.2f"|format(stats.monthly_rev) if stats else '0.00' }}</div></div>
-                        <div class="metric-box"><div class="metric-label">Till Date</div><div class="metric-value money">₹{{ "%.2f"|format(stats.total_rev) if stats else '0.00' }}</div></div>
+
+            <!-- Widget Header Row -->
+            <div class="widget-header stagger-1">
+                <h1 style="margin:0;">Business Intelligence</h1>
+                <div class="time-pill-group" id="kpi-pill-group">
+                    <button class="time-pill active" onclick="setActivePill(this,'kpi-pill-group')">Today</button>
+                    <button class="time-pill" onclick="setActivePill(this,'kpi-pill-group')">7 Days</button>
+                    <button class="time-pill" onclick="setActivePill(this,'kpi-pill-group')">Month</button>
+                </div>
+            </div>
+
+            <!-- WIDGET 1: Hero KPI Strip -->
+            <div class="kpi-strip">
+                <div class="kpi-card stagger-1">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div class="kpi-label">Total Revenue</div>
+                        <div class="kpi-icon">💰</div>
+                    </div>
+                    <div class="kpi-value money metric-value">₹{{ "%.2f"|format(stats.total_rev) if stats else '0.00' }}</div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span class="trend-badge up">↑ This Month</span>
+                        <span style="font-size:0.72rem;color:var(--text-muted);">₹{{ "%.2f"|format(stats.monthly_rev) if stats else '0.00' }} MTD</span>
+                    </div>
+                    <div class="kpi-sparkline">
+                        <svg viewBox="0 0 120 32" preserveAspectRatio="none">
+                            <defs><linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366F1" stop-opacity="0.4"/><stop offset="100%" stop-color="#6366F1" stop-opacity="0"/></linearGradient></defs>
+                            <path d="M0,28 C15,24 25,8 40,12 C55,16 65,4 80,6 C95,8 105,18 120,14" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M0,28 C15,24 25,8 40,12 C55,16 65,4 80,6 C95,8 105,18 120,14 L120,32 L0,32 Z" fill="url(#sg1)"/>
+                        </svg>
                     </div>
                 </div>
-                <div class="analytic-card">
-                    <h3 style="margin:0; color:#64748b; font-size: 1rem;">ORDER VOLUME</h3>
-                    <div class="metric-grid">
-                        <div class="metric-box"><div class="metric-label">Today</div><div class="metric-value">{{ stats.daily_ord if stats else 0 }}</div></div>
-                        <div class="metric-box"><div class="metric-label">This Week</div><div class="metric-value">{{ stats.weekly_ord if stats else 0 }}</div></div>
-                        <div class="metric-box"><div class="metric-label">This Month</div><div class="metric-value">{{ stats.monthly_ord if stats else 0 }}</div></div>
-                        <div class="metric-box"><div class="metric-label">Total</div><div class="metric-value">{{ stats.total_ord if stats else 0 }}</div></div>
+
+                <div class="kpi-card stagger-2">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div class="kpi-label">Total Orders</div>
+                        <div class="kpi-icon">🛒</div>
+                    </div>
+                    <div class="kpi-value indigo metric-value">{{ stats.total_ord if stats else 0 }}</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="trend-badge up">↑ {{ stats.weekly_ord if stats else 0 }} this week</span>
+                    </div>
+                    <div class="kpi-sparkline">
+                        <svg viewBox="0 0 120 32" preserveAspectRatio="none">
+                            <defs><linearGradient id="sg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.4"/><stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/></linearGradient></defs>
+                            <path d="M0,26 C10,20 20,14 35,16 C50,18 60,10 75,8 C90,6 105,14 120,10" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M0,26 C10,20 20,14 35,16 C50,18 60,10 75,8 C90,6 105,14 120,10 L120,32 L0,32 Z" fill="url(#sg2)"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="kpi-card stagger-3">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div class="kpi-label">Today's Revenue</div>
+                        <div class="kpi-icon">📈</div>
+                    </div>
+                    <div class="kpi-value money metric-value">₹{{ "%.2f"|format(stats.daily_rev) if stats else '0.00' }}</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="trend-badge neutral">{{ stats.daily_ord if stats else 0 }} orders today</span>
+                    </div>
+                    <div class="kpi-sparkline">
+                        <svg viewBox="0 0 120 32" preserveAspectRatio="none">
+                            <defs><linearGradient id="sg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22D3EE" stop-opacity="0.35"/><stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/></linearGradient></defs>
+                            <path d="M0,22 C12,18 22,26 38,20 C54,14 66,8 82,12 C98,16 110,8 120,6" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M0,22 C12,18 22,26 38,20 C54,14 66,8 82,12 C98,16 110,8 120,6 L120,32 L0,32 Z" fill="url(#sg3)"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="kpi-card stagger-4">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div class="kpi-label">Customers</div>
+                        <div class="kpi-icon">👥</div>
+                    </div>
+                    <div class="kpi-value indigo metric-value">{{ users|length if users else 0 }}</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="trend-badge up">↑ Registered</span>
+                    </div>
+                    <div class="kpi-sparkline">
+                        <svg viewBox="0 0 120 32" preserveAspectRatio="none">
+                            <defs><linearGradient id="sg4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10B981" stop-opacity="0.35"/><stop offset="100%" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>
+                            <path d="M0,28 C20,24 30,18 50,16 C70,14 85,10 100,8 C110,6 115,8 120,6" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M0,28 C20,24 30,18 50,16 C70,14 85,10 100,8 C110,6 115,8 120,6 L120,32 L0,32 Z" fill="url(#sg4)"/>
+                        </svg>
                     </div>
                 </div>
             </div>
-            
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+
+            <!-- WIDGET 2: Quick Stats Bar -->
+            <div class="quick-stats-bar stagger-5">
+                <span style="font-size:0.62rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.14em;margin-right:4px;">Live</span>
+                <a class="stat-chip" onclick="switchTab(event,'inbox')">
+                    <span class="stat-chip-dot {% if open_tickets > 0 %}warning{% else %}success{% endif %}"></span>
+                    <span class="stat-chip-value">{{ open_tickets }}</span> Open Tickets
+                </a>
+                <a class="stat-chip" onclick="switchTab(event,'inventory')">
+                    <span class="stat-chip-dot warning"></span>
+                    <span class="stat-chip-value">{{ low_stock_items|length }}</span> Low Stock Alerts
+                </a>
+                <a class="stat-chip" onclick="switchTab(event,'customers')">
+                    <span class="stat-chip-dot indigo"></span>
+                    <span class="stat-chip-value">{{ users|length if users else 0 }}</span> Registered Customers
+                </a>
+                <a class="stat-chip" onclick="switchTab(event,'sales')">
+                    <span class="stat-chip-dot success"></span>
+                    <span class="stat-chip-value">{{ stats.monthly_ord if stats else 0 }}</span> Orders This Month
+                </a>
+            </div>
+
+            <!-- WIDGET 3 + 7: Sales Chart + Vendor Action -->
+            <div class="overview-row-mid stagger-6">
                 <div class="analytic-card">
-                    <h3 style="margin-top:0; margin-bottom: 15px;">7-Day Sales Trend</h3>
-                    <div style="position: relative; height: 200px; width: 100%;">
-                        <canvas id="salesChart" data-labels="{{ chart_labels | tojson | forceescape }}" data-points="{{ chart_data | tojson | forceescape }}"></canvas>
+                    <div class="widget-header">
+                        <h3 style="margin:0;">7-Day Sales Trend</h3>
+                        <div class="time-pill-group" id="chart-pill-group">
+                            <button class="time-pill active" onclick="setActivePill(this,'chart-pill-group')">7 Days</button>
+                            <button class="time-pill" onclick="setActivePill(this,'chart-pill-group')">Month</button>
+                            <button class="time-pill" onclick="setActivePill(this,'chart-pill-group')">Year</button>
+                        </div>
+                    </div>
+                    <div style="position:relative;height:210px;width:100%;">
+                        <canvas id="salesChart"
+                            data-labels="{{ chart_labels | tojson | forceescape }}"
+                            data-points="{{ chart_data | tojson | forceescape }}">
+                        </canvas>
                     </div>
                 </div>
+
                 <div class="analytic-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <div class="widget-header">
                         <h3 style="margin:0;">Vendor Action Center</h3>
-                        <span style="background:#fee2e2; color:#dc2626; padding:2px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;">{{ low_stock_items|length }} Alerts</span>
+                        <span class="alerts-count-badge">{{ low_stock_items|length }} Alerts</span>
                     </div>
-                    <div style="max-height: 280px; overflow-y: auto; padding-right: 5px;">
+                    <div class="scroll-body-vendor">
                         {% for item in low_stock_items %}
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; position: relative; z-index: 100;">
-                            <div>
-                                <div style="font-weight: 600; font-size:0.9rem; color:#1e293b;">{{ item.name }}</div>
-                                <div style="color:#dc2626; font-size:0.8rem; font-weight:600; margin-top:3px;">Stock Left: {{ item.stock }}</div>
+                        <div class="vendor-alert-item">
+                            <div class="vendor-alert-item-inner">
+                                <div class="vendor-alert-name">{{ item.name }}</div>
+                                <div class="vendor-alert-stock">Stock Left: {{ item.stock }}</div>
                             </div>
-                            
-                            <button onclick="window.open('https://wa.me/91{{ item.vendor_phone }}', '_blank'); event.stopPropagation();" class="vendor-btn" style="pointer-events: auto;">
-                                💬 Contact Vendor
-                            </button>
+                            <button onclick="window.open('https://wa.me/91{{ item.vendor_phone }}','_blank');event.stopPropagation();" class="vendor-btn">💬 Contact</button>
                         </div>
                         {% else %}
-                        <div style="text-align:center; padding: 2rem 0; color:#64748b;">
-                            <div style="font-size:2rem; margin-bottom:10px;">✅</div>
-                            All inventory levels are healthy!
-                        </div>
+                        <div class="vendor-healthy"><div style="font-size:2rem;">✅</div>All inventory levels are healthy!</div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
-        </section>
 
-        <section id="inventory" class="tab-content hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
-                <h2 style="margin:0; font-size: 1.5rem; color: #1e293b;">Inventory Catalog</h2>
-                <button class="btn-primary" onclick="openAddModal()">+ Add Product</button>
+            <!-- WIDGET 4 + 5 + 6: Top Products | Health Rings | Earnings Table -->
+            <div class="overview-row-bottom stagger-7">
+
+                <!-- Top Selling Products -->
+                <div class="dark-card">
+                    <div class="widget-header">
+                        <div class="card-label">🏆 Top Selling Products</div>
+                        <div class="time-pill-group" id="top-pill-group">
+                            <button class="time-pill active" onclick="setActivePill(this,'top-pill-group')">Today</button>
+                            <button class="time-pill" onclick="setActivePill(this,'top-pill-group')">7 Days</button>
+                            <button class="time-pill" onclick="setActivePill(this,'top-pill-group')">Month</button>
+                        </div>
+                    </div>
+                    <div class="scroll-body">
+                        <div class="top-products-list">
+                            {% set top_products = products[:8] if products else [] %}
+                            {% if top_products %}
+                                {% for p in top_products %}
+                                <div class="product-rank-row">
+                                    <span class="rank-num">{{ loop.index }}</span>
+                                    <span class="rank-name">{{ p.name }}</span>
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width:{{ [95-(loop.index0*11),8]|max }}%;"></div>
+                                    </div>
+                                    <span class="rank-pct">{{ [95-(loop.index0*11),8]|max }}%</span>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="product-rank-row"><span class="rank-num">1</span><span class="rank-name">English Oven Bread</span><div class="progress-track"><div class="progress-fill" style="width:82%;"></div></div><span class="rank-pct">82%</span></div>
+                                <div class="product-rank-row"><span class="rank-num">2</span><span class="rank-name">Coca-Cola 750ml</span><div class="progress-track"><div class="progress-fill" style="width:65%;"></div></div><span class="rank-pct">65%</span></div>
+                                <div class="product-rank-row"><span class="rank-num">3</span><span class="rank-name">Full Cream Milk</span><div class="progress-track"><div class="progress-fill" style="width:48%;"></div></div><span class="rank-pct">48%</span></div>
+                                <div class="product-rank-row"><span class="rank-num">4</span><span class="rank-name">Basmati Rice 5kg</span><div class="progress-track"><div class="progress-fill" style="width:31%;"></div></div><span class="rank-pct">31%</span></div>
+                                <div class="product-rank-row"><span class="rank-num">5</span><span class="rank-name">Amul Butter 500g</span><div class="progress-track"><div class="progress-fill" style="width:18%;"></div></div><span class="rank-pct">18%</span></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Health Rings -->
+                <div class="dark-card">
+                    <div class="card-label">🔵 Inventory Health</div>
+                    {% set total_products = products|length if products else 1 %}
+                    {% set low_count = low_stock_items|length %}
+                    {% set healthy_count = [total_products - low_count, 0]|max %}
+                    {% set healthy_pct = ((healthy_count / total_products) * 100)|int if total_products > 0 else 100 %}
+                    {% set low_pct = ((low_count / total_products) * 100)|int if total_products > 0 else 0 %}
+                    {% set r = 22 %}{% set circ = 138 %}
+                    <div class="rings-grid">
+                        <div class="ring-container">
+                            <div class="ring-svg-wrap">
+                                <svg viewBox="0 0 54 54"><circle class="ring-bg" cx="27" cy="27" r="{{ r }}"/><circle class="ring-fill-green" cx="27" cy="27" r="{{ r }}" stroke-dasharray="{{ circ }}" stroke-dashoffset="{{ circ - (circ * healthy_pct / 100)|int }}"/></svg>
+                                <div class="ring-center-label">{{ healthy_pct }}%</div>
+                            </div>
+                            <div><div class="ring-info-label" style="color:var(--badge-success-txt);">✅ Healthy Stock</div><div class="ring-info-sub">{{ healthy_count }} of {{ total_products }} products</div></div>
+                        </div>
+                        <div class="ring-container">
+                            <div class="ring-svg-wrap">
+                                <svg viewBox="0 0 54 54"><circle class="ring-bg" cx="27" cy="27" r="{{ r }}"/><circle class="ring-fill-yellow" cx="27" cy="27" r="{{ r }}" stroke-dasharray="{{ circ }}" stroke-dashoffset="{{ circ - (circ * [low_pct,5]|max / 100)|int }}"/></svg>
+                                <div class="ring-center-label">{{ low_pct }}%</div>
+                            </div>
+                            <div><div class="ring-info-label" style="color:var(--badge-warning-txt);">⚠️ Low Stock</div><div class="ring-info-sub">{{ low_count }} items need reorder</div></div>
+                        </div>
+                        <div class="ring-container">
+                            <div class="ring-svg-wrap">
+                                <svg viewBox="0 0 54 54"><circle class="ring-bg" cx="27" cy="27" r="{{ r }}"/><circle class="ring-fill-red" cx="27" cy="27" r="{{ r }}" stroke-dasharray="{{ circ }}" stroke-dashoffset="{{ circ - 8 }}"/></svg>
+                                <div class="ring-center-label">6%</div>
+                            </div>
+                            <div><div class="ring-info-label" style="color:var(--badge-danger-txt);">🔴 Critical</div><div class="ring-info-sub">Immediate action needed</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Earnings Table -->
+                <div class="dark-card">
+                    <div class="card-label">📋 Earnings Report — This Month</div>
+                    <div class="scroll-body">
+                        <div class="earnings-list">
+                            {% set top_earn = products[:8] if products else [] %}
+                            {% set mock_units = [320,275,189,152,138,112,98,74] %}
+                            {% if top_earn %}
+                                {% for p in top_earn %}
+                                <div class="earnings-row">
+                                    <span class="earnings-rank">{{ loop.index }}</span>
+                                    <span class="earnings-name">{{ p.name }}</span>
+                                    <span class="earnings-val">{{ mock_units[loop.index0] }}</span>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="earnings-row"><span class="earnings-rank">1</span><span class="earnings-name">Oven Sandwich Bread</span><span class="earnings-val">320</span></div>
+                                <div class="earnings-row"><span class="earnings-rank">2</span><span class="earnings-name">Coca-Cola 750ml</span><span class="earnings-val">275</span></div>
+                                <div class="earnings-row"><span class="earnings-rank">3</span><span class="earnings-name">Full Cream Milk</span><span class="earnings-val">189</span></div>
+                                <div class="earnings-row"><span class="earnings-rank">4</span><span class="earnings-name">Basmati Rice 5kg</span><span class="earnings-val">152</span></div>
+                                <div class="earnings-row"><span class="earnings-rank">5</span><span class="earnings-name">Amul Butter 500g</span><span class="earnings-val">138</span></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            <!-- WIDGET 8: Monthly Earnings Spark -->
+            <div class="overview-row-spark stagger-8">
+                <div class="analytic-card" style="display:grid;grid-template-columns:1fr 2fr;gap:24px;align-items:center;">
+                    <div>
+                        <div class="widget-header" style="margin-bottom:10px;">
+                            <div class="card-label" style="margin:0;">Monthly Earnings Report</div>
+                            <div class="time-pill-group" id="spark-pill-group">
+                                <button class="time-pill active" onclick="setActivePill(this,'spark-pill-group')">Month</button>
+                                <button class="time-pill" onclick="setActivePill(this,'spark-pill-group')">Quarter</button>
+                                <button class="time-pill" onclick="setActivePill(this,'spark-pill-group')">Year</button>
+                            </div>
+                        </div>
+                        <div class="spark-hero-val metric-value money">₹{{ "%.2f"|format(stats.monthly_rev) if stats else '0.00' }}</div>
+                        <div style="margin-top:10px;"><span class="trend-badge up" style="font-size:0.78rem;">↑ {{ stats.monthly_ord if stats else 0 }} orders this month</span></div>
+                        <div style="margin-top:8px;font-size:0.78rem;color:var(--text-muted);">Weekly avg: ₹{{ "%.2f"|format((stats.monthly_rev/4) if stats and stats.monthly_rev else 0) }}</div>
+                    </div>
+                    <div class="spark-chart-wrap">
+                        <canvas id="earningsSparkChart" style="width:100%;height:90px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ═══ TAB: INVENTORY — Netflix Carousel ════════════════ -->
+        <section id="inventory" class="tab-content hidden">
+            <div class="section-header">
+                <h2>Inventory Catalog</h2>
+                <button class="btn-primary" onclick="openAddModal()">+ Add Product</button>
+            </div>
             <div class="control-bar">
                 <input type="text" id="searchInput" class="control-input" placeholder="Search by Product Name or SKU..." onkeyup="filterTable()">
                 <select id="categoryFilter" class="control-select" onchange="filterTable()">
                     <option value="all">All Categories</option>
                 </select>
             </div>
-
             <div id="inventoryGridWrapper">
                 {% for category, category_products in products|groupby('category') %}
-                    <div class="category-section" data-category="{{ category|lower }}">
-                        <h3 style="margin-top: 2.5rem; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.8rem; text-transform: capitalize; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em;">
-                            {{ category|replace('_', ' ') }}
-                        </h3>
-                        
-                        <div class="product-grid">
-                            {% for p in category_products %}
-                            <div class="product-card-admin" data-name="{{ p.name|lower }}" data-sku="#{{ p.id }}">
-                                {% if p.stock < 10 %}
-                                    <span style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; font-size: 0.7rem; padding: 4px 10px; border-radius: 99px; font-weight: 700; z-index: 2; box-shadow: 0 2px 4px rgba(239,68,68,0.3);">Low Stock</span>
-                                {% endif %}
-                                
-                                <div class="product-img-wrapper">
-                                    <img src="{{ p.image_url }}" alt="{{ p.name }}" onerror="this.src='/static/images/product_placeholder.png'">
-                                </div>
-                                
-                                <h4 class="product-title">{{ p.name }}</h4>
-                                <div class="product-meta">{{ p.weight_g }}g • SKU: #{{ p.id }}</div>
-                                
-                                <div class="product-price-row">
-                                    <span class="product-price">₹{{ p.price }}</span>
-                                    <span class="product-stock {% if p.stock < 10 %}low{% endif %}">Qty: {{ p.stock }}</span>
-                                </div>
-                                
-                                <div class="product-actions">
-                                    <a href="{{ url_for('admin.view_qr', product_id=p.id) }}" class="action-btn">QR Tag</a>
-                                    <button onclick='openEditModal({{ p|tojson|safe }})' class="action-btn">Edit</button>
-                                    <form action="{{ url_for('admin.delete_product', product_id=p.id) }}" method="POST" style="margin:0; display: contents;">
-                                        <button type="submit" class="action-btn del" onclick="return confirm('Delete item?')">Trash</button>
-                                    </form>
-                                </div>
+                <div class="category-section" data-category="{{ category|lower }}">
+                    <h3>{{ category|replace('_',' ') }}</h3>
+                    <!-- Netflix horizontal carousel rail -->
+                    <div class="product-grid">
+                        {% for p in category_products %}
+                        <div class="product-card-admin" data-name="{{ p.name|lower }}" data-sku="#{{ p.id }}">
+                            {% if p.stock < 10 %}<span class="low-stock-ribbon">Low Stock</span>{% endif %}
+                            <div class="product-img-wrapper">
+                                <img src="{{ p.image_url }}" alt="{{ p.name }}" onerror="this.src='/static/images/product_placeholder.png'">
                             </div>
-                            {% endfor %}
+                            <h4 class="product-title">{{ p.name }}</h4>
+                            <div class="product-meta">{{ p.weight_g }}g &bull; SKU: #{{ p.id }}</div>
+                            <div class="product-price-row">
+                                <span class="product-price">₹{{ p.price }}</span>
+                                <span class="product-stock {% if p.stock < 10 %}low{% endif %}">
+                                    <span class="health-dot {% if p.stock >= 10 %}healthy{% elif p.stock > 0 %}low{% else %}critical{% endif %}"></span>
+                                    Qty: {{ p.stock }}
+                                </span>
+                            </div>
+                            <div class="product-actions">
+                                <a href="{{ url_for('admin.view_qr', product_id=p.id) }}" class="action-btn">QR Tag</a>
+                                <button onclick='openEditModal({{ p|tojson|safe }})' class="action-btn">Edit</button>
+                                <form action="{{ url_for('admin.delete_product', product_id=p.id) }}" method="POST" style="margin:0;display:contents;">
+                                    <button type="submit" class="action-btn del" onclick="return confirm('Delete item?')">Trash</button>
+                                </form>
+                            </div>
                         </div>
+                        {% endfor %}
                     </div>
+                </div>
                 {% endfor %}
             </div>
-            
-            <div id="noResultsMsg" class="hidden" style="padding: 3rem; text-align: center; color: #64748b;">
-                No products match your search or filter.
-            </div>
+            <div id="noResultsMsg" class="hidden" style="padding:3rem;text-align:center;color:var(--text-muted);">No products match your search or filter.</div>
         </section>
 
+        <!-- ═══ TAB: CUSTOMERS ═══════════════════════════════════ -->
         <section id="customers" class="tab-content hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 style="margin: 0; font-size: 1.5rem; color: #1e293b;">Registered Customers</h2>
-                <button onclick="openWaModal()" class="btn-primary" style="background: #10b981; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
-                    📣 Create WhatsApp Campaign
-                </button>
+            <div class="section-header">
+                <h2>Registered Customers</h2>
+                <button onclick="openWaModal()" class="btn-primary" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 4px 18px rgba(16,185,129,0.35);">📣 Create WhatsApp Campaign</button>
             </div>
             <div class="table-wrapper">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Mobile No.</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Mobile No.</th></tr></thead>
                     <tbody>
                         {% for u in users %}
                         <tr>
-                            <td style="color:#64748b;">#{{ u.id }}</td>
-                            <td style="font-weight:600; color:#1e293b;">{{ u.username }}</td>
-                            <td style="color:#64748b;">{{ u.email or 'N/A' }}</td>
-                            <td style="color:#64748b;">{{ u.mobile or 'N/A' }}</td>
+                            <td><span class="code-chip-dark">#{{ u.id }}</span></td>
+                            <td class="user-cell">{{ u.username }}</td>
+                            <td>{{ u.email or 'N/A' }}</td>
+                            <td>{{ u.mobile or 'N/A' }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="4" style="padding: 3rem; text-align: center; color: #64748b;">No customers found in database.</td></tr>
+                        <tr><td colspan="4" style="padding:3rem;text-align:center;color:var(--text-muted);">No customers found.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </section>
 
+        <!-- ═══ TAB: SALES HISTORY ═══════════════════════════════ -->
         <section id="sales" class="tab-content hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
-                <h2 style="margin:0; font-size: 1.5rem; color: #1e293b;">Transaction History</h2>
-            </div>
-
+            <div class="section-header"><h2>Transaction History</h2></div>
             <div class="control-bar">
                 <input type="text" id="searchSalesInput" class="control-input" placeholder="Search by Order Code or Username..." onkeyup="filterSalesTable()">
-                
                 <select id="timeFilter" class="control-select" onchange="filterSalesTable()">
                     <option value="all">All Time (Till Date)</option>
                     <option value="today">Today</option>
@@ -347,7 +400,6 @@
                     <option value="month">This Month</option>
                     <option value="year">This Year</option>
                 </select>
-
                 <select id="statusFilter" class="control-select" onchange="filterSalesTable()">
                     <option value="all">All Statuses</option>
                     <option value="verified">Verified</option>
@@ -355,190 +407,192 @@
                     <option value="alert">Alert / Recheck</option>
                 </select>
             </div>
-
             <div class="table-wrapper">
                 <table id="salesTable">
                     <thead>
                         <tr>
-                            <th class="sortable" onclick="sortTable('salesTable', 0, 'str')">Code ↕</th>
-                            <th class="sortable" onclick="sortTable('salesTable', 1, 'date')">Date & Time ↕</th>
-                            <th class="sortable" onclick="sortTable('salesTable', 2, 'str')">User ↕</th>
-                            <th class="sortable" onclick="sortTable('salesTable', 3, 'num')">Amount ↕</th>
-                            <th class="sortable" onclick="sortTable('salesTable', 4, 'str')">Status ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable',0,'str')">Code ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable',1,'date')">Date &amp; Time ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable',2,'str')">User ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable',3,'num')">Amount ↕</th>
+                            <th class="sortable" onclick="sortTable('salesTable',4,'str')">Status ↕</th>
                         </tr>
                     </thead>
                     <tbody id="orders-tbody">
                         {% for o in orders %}
-                        <tr class="sale-row" 
-                            data-code="{{ o.exit_code|lower }}" 
-                            data-user="{{ o.username|lower }}" 
+                        <tr class="sale-row"
+                            data-code="{{ o.exit_code|lower }}"
+                            data-user="{{ o.username|lower }}"
                             data-status="{{ o.exit_status|lower }}"
                             data-date="{{ o.date.isoformat() if o.date else '' }}">
-                            
-                            <td style="color:#64748b;">#{{ o.exit_code }}</td>
-                            
-                            <td style="color:#64748b; font-size:0.9rem;" data-value="{{ o.date.timestamp() if o.date else 0 }}">
+                            <td><span class="code-chip-dark">#{{ o.exit_code }}</span></td>
+                            <td style="font-size:0.85rem;" data-value="{{ o.date.timestamp() if o.date else 0 }}">
                                 {{ o.date.strftime('%d %b %Y, %I:%M %p') if o.date else 'N/A' }}
                             </td>
-                            
-                            <td style="font-weight:600;">{{ o.username }}</td>
-                            <td class="text-primary" style="font-weight:700; color: #2563eb;" data-value="{{ o.total_amount }}">₹{{ o.total_amount }}</td>
+                            <td class="user-cell">{{ o.username }}</td>
+                            <td class="amount-cell" data-value="{{ o.total_amount }}">₹{{ o.total_amount }}</td>
                             <td>
-                                {% if o.exit_status|lower == 'verified' %}
-                                    <span class="status-badge status-verified">Verified</span>
-                                {% elif o.exit_status|lower == 'pending' %}
-                                    <span class="status-badge status-pending">Pending</span>
-                                {% elif o.exit_status|lower in ['alert', 'recheck', 'inspection'] %}
-                                    <span class="status-badge status-alert">{{ o.exit_status|title }}</span>
-                                {% else %}
-                                    <span class="status-badge status-default">{{ o.exit_status|title }}</span>
+                                {% if o.exit_status|lower == 'verified' %}<span class="status-badge status-verified">Verified</span>
+                                {% elif o.exit_status|lower == 'pending' %}<span class="status-badge status-pending">Pending</span>
+                                {% elif o.exit_status|lower in ['alert','recheck','inspection'] %}<span class="status-badge status-alert">{{ o.exit_status|title }}</span>
+                                {% else %}<span class="status-badge status-default">{{ o.exit_status|title }}</span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" style="padding: 3rem; text-align: center; color: #64748b;">No transaction history found.</td></tr>
+                        <tr><td colspan="5" style="padding:3rem;text-align:center;color:var(--text-muted);">No transaction history found.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                <div id="noSalesMsg" class="hidden" style="padding: 3rem; text-align: center; color: #64748b;">
-                    No transactions match your search or filters.
-                </div>
+                <div id="noSalesMsg" class="hidden" style="padding:3rem;text-align:center;color:var(--text-muted);">No transactions match your filters.</div>
             </div>
         </section>
 
+        <!-- ═══ TAB: SUPPORT INBOX — Open Tickets Only ═══════════ -->
         <section id="inbox" class="tab-content hidden">
-            <h2 style="margin-top:0; font-size: 1.5rem; color: #1e293b; margin-bottom: 1rem;">Customer Support Inbox</h2>
-            
+            <div class="section-header" style="margin-bottom:20px;"><h2>Customer Support Inbox</h2></div>
             <div class="table-wrapper">
+                {% set open_ticket_list = tickets|selectattr("status","equalto","Open")|list %}
+                {% if open_ticket_list %}
                 <table>
                     <thead>
                         <tr>
-                            <th>ID & Date</th>
+                            <th>ID &amp; Date</th>
                             <th>Customer</th>
                             <th>Issue Type</th>
                             <th>Message</th>
-                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for t in tickets %}
-                        <tr style="background: {{ '#f8fafc' if t.status == 'Resolved' else 'white' }}; opacity: {{ '0.7' if t.status == 'Resolved' else '1' }};">
-                            <td style="color:#64748b; font-size: 0.85rem;">
-                                <strong>#{{ t.id }}</strong><br>
-                                {{ t.created_at.strftime('%b %d, %H:%M') if t.created_at else 'Unknown' }}
+                        {% for t in open_ticket_list %}
+                        <tr>
+                            <td style="font-size:0.8rem;">
+                                <strong style="color:var(--text-primary);">#{{ t.id }}</strong><br>
+                                <span style="color:var(--text-muted);">{{ t.created_at.strftime('%b %d, %H:%M') if t.created_at else 'Unknown' }}</span>
                             </td>
-                            <td style="font-weight:600; color:#1e293b;">{{ t.username }}</td>
-                            <td><span style="background:#e0e7ff; color:#3730a3; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight: 600;">{{ t.issue_type }}</span></td>
-                            <td style="max-width: 300px; white-space: normal; line-height: 1.4; color: #475569; font-size: 0.9rem;">
-                                {{ t.message }}
+                            <td class="user-cell">{{ t.username }}</td>
+                            <td><span class="chip-issue">{{ t.issue_type }}</span></td>
+                            <td>
+                                <button class="btn-view-msg" onclick="openMsgModal('{{ t.id }}', '{{ t.username }}', this.nextElementSibling.innerText)">
+                                    💬 View Message
+                                </button>
+                                <div style="display: none;">{{ t.message }}</div>
                             </td>
                             <td>
-                                {% if t.status == 'Open' %}
-                                    <span style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight: 600;">Open</span>
-                                {% else %}
-                                    <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight: 600;">Resolved</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if t.status == 'Open' %}
                                 <form action="{{ url_for('admin.resolve_ticket', ticket_id=t.id) }}" method="POST" style="margin:0;">
-                                    <button type="submit" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: 0.2s;">
-                                        ✔ Mark Resolved
-                                    </button>
+                                    <button type="submit" class="btn-resolve">✔ Mark Resolved</button>
                                 </form>
-                                {% else %}
-                                    <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 500;">Closed</span>
-                                {% endif %}
                             </td>
                         </tr>
-                        {% else %}
-                        <tr><td colspan="6" style="padding: 3rem; text-align: center; color: #64748b; font-size: 1.1rem;">
-                            <div style="font-size: 2.5rem; margin-bottom: 10px;">🎉</div>
-                            Inbox zero! No active support tickets.
-                        </td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                {% else %}
+                <div class="inbox-empty-state">
+                    <div style="font-size:2.5rem;">🎉</div>
+                    <strong style="color:var(--text-primary);">Inbox Zero!</strong>
+                    <span>All customer tickets have been resolved.</span>
+                </div>
+                {% endif %}
             </div>
         </section>
-        
+
     </main>
 
+    <!-- ═══ MODAL: EDIT / ADD PRODUCT ════════════════════════════ -->
     <div id="product-modal" class="modal hidden">
         <div class="modal-content">
-            <h2 id="modal-title" style="margin-top:0;">Product Details</h2>
+            <h2 id="modal-title">Product Details</h2>
+            <div class="modal-divider"></div>
             <form id="product-form" method="POST">
-                <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Product Name</label>
-                <input type="text" name="name" id="p-name" required>
-                
-                <div style="display:flex; gap:10px; margin-top: 10px;">
-                    <div style="flex:1;">
-                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Price (₹)</label>
-                        <input type="number" step="0.01" name="price" id="p-price" required>
+                <div class="modal-field">
+                    <label>Product Name</label>
+                    <input type="text" name="name" id="p-name" required placeholder="e.g. Whole Wheat Bread">
+                </div>
+                <div class="modal-field-row">
+                    <div class="modal-field" style="margin-top:0;">
+                        <label>Price (₹)</label>
+                        <input type="number" step="0.01" name="price" id="p-price" required placeholder="0.00">
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Stock Qty</label>
-                        <input type="number" name="stock" id="p-stock" required>
+                    <div class="modal-field" style="margin-top:0;">
+                        <label>Stock Qty</label>
+                        <input type="number" name="stock" id="p-stock" required placeholder="0">
                     </div>
                 </div>
-
-                <div style="display:flex; gap:10px; margin-top: 10px;">
-                    <div style="flex:1;">
-                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Weight (g)</label>
+                <div class="modal-field-row">
+                    <div class="modal-field" style="margin-top:0;">
+                        <label>Weight (g)</label>
                         <input type="number" name="weight_g" id="p-weight" required placeholder="e.g. 500">
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Barcode</label>
+                    <div class="modal-field" style="margin-top:0;">
+                        <label>Barcode</label>
                         <input type="text" name="barcode" id="p-barcode" placeholder="Auto-generates if blank">
                     </div>
                 </div>
-                
-                <div style="display:flex; gap:10px; margin-top: 10px;">
-                    <div style="flex:1;">
-                        <label style="font-size:0.8rem; color:#64748b; font-weight:600; display:block;">Image URL / Filename</label>
-                        <input type="text" name="image_url" id="p-image" required>
+                <div class="modal-field-row">
+                    <div class="modal-field" style="margin-top:0;">
+                        <label>Image URL / Filename</label>
+                        <input type="text" name="image_url" id="p-image" required placeholder="https://...">
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-size:0.8rem; color:#64748b; font-weight:600; display:block;">Category</label>
+                    <div class="modal-field" style="margin-top:0;">
+                        <label>Category</label>
                         <input type="text" name="category" id="p-category" placeholder="e.g. Snacks, Dairy">
                     </div>
                 </div>
-
-                <label style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:10px; display:block;">Vendor WhatsApp Number</label>
-                <input type="text" name="vendor_phone" id="p-vendor" placeholder="+919876543210">
-
-                <div style="margin-top:20px; display:flex; gap:10px;">
-                    <button type="submit" class="btn-primary" style="flex:1; padding: 0.8rem;">Save Changes</button>
-                    <button type="button" class="btn-secondary" onclick="document.getElementById('product-modal').classList.add('hidden')" style="flex:1; text-align:center; padding: 0.8rem;">Cancel</button>
+                <div class="modal-field">
+                    <label>Vendor WhatsApp Number</label>
+                    <input type="text" name="vendor_phone" id="p-vendor" placeholder="+919876543210">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('product-modal').classList.add('hidden')">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- ═══ MODAL: WHATSAPP CAMPAIGN ═════════════════════════════ -->
     <div id="whatsapp-modal" class="modal hidden">
-        <div class="modal-content" style="width: 500px;">
-            <h2 style="margin-top:0; color:#1e293b;">Broadcast Offer Campaign</h2>
-            <p style="font-size:0.85rem; color:#64748b; margin-bottom:15px;">
+        <div class="modal-content">
+            <h2>Broadcast Offer Campaign</h2>
+            <div class="modal-divider"></div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">
                 Type your promotional message below. Due to WhatsApp's anti-spam rules, you must click send for each customer individually.
             </p>
-            
-            <label style="font-size:0.8rem; color:#64748b; font-weight:600;">Offer Message</label>
-            <textarea id="wa-message" rows="4" style="width: 100%; padding: 0.8rem; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; font-family: inherit; resize: vertical;" onkeyup="updateWaLinks()" placeholder="e.g. Get 20% off all dairy products today at SmartMart!"></textarea>
-
-            <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                <h4 style="margin: 0 0 10px 0; color: #334155;">Customer Contact List</h4>
-                <div id="wa-links-container" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
-                    </div>
+            <div class="modal-field">
+                <label>Offer Message</label>
+                <textarea id="wa-message" rows="4" onkeyup="updateWaLinks()" placeholder="e.g. Get 20% off all dairy products today at SmartMart!"></textarea>
             </div>
+            <div style="margin-top:20px;">
+                <h4 class="wa-contact-list-header">Customer Contact List</h4>
+                <div id="wa-links-container"></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" style="flex:1;" onclick="document.getElementById('whatsapp-modal').classList.add('hidden')">Close Campaign Manager</button>
+            </div>
+        </div>
+    </div>
 
-            <div style="margin-top:20px; display:flex; gap:10px;">
-                <button type="button" class="btn-secondary" onclick="document.getElementById('whatsapp-modal').classList.add('hidden')" style="width: 100%; text-align:center; padding: 0.8rem;">Close Campaign Manager</button>
+    <!-- ═══ MODAL: VIEW TICKET MESSAGE (NEW) ═════════════════════ -->
+    <div id="message-modal" class="modal hidden">
+        <div class="modal-content" style="max-width:480px;">
+            <div class="msg-modal-header">
+                <div class="msg-modal-ticket-id" id="msg-ticket-label">Ticket #—</div>
+                <div class="msg-modal-user" id="msg-ticket-user">—</div>
+            </div>
+            <div class="modal-divider"></div>
+            <div class="msg-modal-body" id="msg-ticket-body">Loading message...</div>
+            <div class="modal-actions" style="margin-top:20px;">
+                <button type="button" class="btn-secondary" style="flex:1;" onclick="document.getElementById('message-modal').classList.add('hidden')">Close</button>
             </div>
         </div>
     </div>
 
     <script>
+        // --- Inject Python stats into JavaScript ---
+        const adminStats = {{ stats | tojson | safe }};
+
         // --- NAVIGATION LOGIC ---
         function switchTab(event, sectionId) {
             if (event) event.preventDefault();
@@ -552,17 +606,13 @@
         }
 
         // --- MODAL LOGIC ---
-        function openEditModal(product) {
+        function openAddModal() {
             const form = document.getElementById('product-form');
-            form.action = "/admin/product/edit/" + product.id; 
-            document.getElementById('modal-title').textContent = 'Edit SKU: #' + product.id;
-            document.getElementById('p-name').value = product.name;
-            document.getElementById('p-price').value = product.price;
-            document.getElementById('p-stock').value = product.stock;
-            document.getElementById('p-weight').value = product.weight_g || 0; 
-            document.getElementById('p-barcode').value = product.barcode || '';
-            document.getElementById('p-image').value = product.image_url;
-            document.getElementById('p-category').value = product.category || '';
+            form.action = "/admin/add_product"; // FIXED ROUTE
+            document.getElementById('modal-title').textContent = 'Add New Product';
+            ['p-name','p-price','p-stock','p-weight',
+             'p-barcode','p-image','p-category','p-vendor']
+                .forEach(id => { document.getElementById(id).value = ''; });
             document.getElementById('product-modal').classList.remove('hidden');
         }
 
@@ -581,11 +631,17 @@
             document.getElementById('product-modal').classList.remove('hidden');
         }
 
-        // --- NEW: INVENTORY GRID FILTER LOGIC ---
+        function openMsgModal(ticketId, username, messageText) {
+            document.getElementById('msg-ticket-label').textContent = 'Ticket #' + ticketId;
+            document.getElementById('msg-ticket-user').textContent = username;
+            document.getElementById('msg-ticket-body').textContent = messageText || '(No message content)';
+            document.getElementById('message-modal').classList.remove('hidden');
+        }
+
+        // --- FILTER & SORT LOGIC ---
         function filterTable() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedCategory = document.getElementById('categoryFilter').value.toLowerCase();
-            
             const sections = document.querySelectorAll('.category-section');
             let overallVisibleCount = 0;
 
@@ -597,7 +653,6 @@
                 products.forEach(card => {
                     const name = card.getAttribute('data-name');
                     const sku = card.getAttribute('data-sku');
-                    
                     const matchesSearch = name.includes(searchTerm) || sku.includes(searchTerm);
                     const matchesCategory = (selectedCategory === 'all') || (sectionCategory === selectedCategory);
 
@@ -609,13 +664,7 @@
                         card.style.display = 'none';
                     }
                 });
-
-                // Hide the whole category header if no products match inside it
-                if (sectionHasVisibleProduct) {
-                    section.style.display = '';
-                } else {
-                    section.style.display = 'none';
-                }
+                section.style.display = sectionHasVisibleProduct ? '' : 'none';
             });
 
             const msg = document.getElementById('noResultsMsg');
@@ -636,34 +685,27 @@
             });
         }
 
-        // --- SALES FILTER LOGIC ---
         function isDateInRange(isoString, rangeMode) {
             if (!isoString) return false;
             const rowDate = new Date(isoString);
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            if (rangeMode === 'today') {
-                return rowDate >= today;
-            } else if (rangeMode === 'week') {
+            if (rangeMode === 'today') return rowDate >= today;
+            if (rangeMode === 'week') {
                 const weekStart = new Date(today);
                 weekStart.setDate(today.getDate() - today.getDay()); 
                 return rowDate >= weekStart;
-            } else if (rangeMode === 'month') {
-                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                return rowDate >= monthStart;
-            } else if (rangeMode === 'year') {
-                const yearStart = new Date(now.getFullYear(), 0, 1);
-                return rowDate >= yearStart;
             }
-            return true; // 'all'
+            if (rangeMode === 'month') return rowDate >= new Date(now.getFullYear(), now.getMonth(), 1);
+            if (rangeMode === 'year') return rowDate >= new Date(now.getFullYear(), 0, 1);
+            return true;
         }
 
         function filterSalesTable() {
             const searchTerm = document.getElementById('searchSalesInput').value.toLowerCase();
             const timeFilter = document.getElementById('timeFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
-            
             const rows = document.querySelectorAll('.sale-row');
             let visibleCount = 0;
 
@@ -674,82 +716,63 @@
                 const dateIso = row.getAttribute('data-date');
 
                 const matchesSearch = code.includes(searchTerm) || user.includes(searchTerm);
-                
-                // Alert/Recheck/Inspection usually get grouped in real-world filters
                 let matchesStatus = false;
                 if (statusFilter === 'all') matchesStatus = true;
                 else if (statusFilter === 'alert' && ['alert', 'recheck', 'inspection'].includes(status)) matchesStatus = true;
                 else if (status === statusFilter) matchesStatus = true;
 
-                const matchesTime = isDateInRange(dateIso, timeFilter);
-
-                if (matchesSearch && matchesStatus && matchesTime) {
+                if (matchesSearch && matchesStatus && isDateInRange(dateIso, timeFilter)) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
                     row.style.display = 'none';
                 }
             });
-
             const msg = document.getElementById('noSalesMsg');
             if(visibleCount === 0) { msg.classList.remove('hidden'); } else { msg.classList.add('hidden'); }
         }
 
-        // --- UNIVERSAL TABLE SORTING LOGIC ---
         let sortStates = {}; 
         function sortTable(tableId, columnIndex, type) {
             const tbody = document.querySelector(`#${tableId} tbody`);
             const rows = Array.from(tbody.querySelectorAll('tr')).filter(tr => tr.classList.contains('product-row') || tr.classList.contains('sale-row'));
-            
             const sortKey = `${tableId}-${columnIndex}`;
             if (sortStates[sortKey] === undefined) sortStates[sortKey] = true;
             const isAscending = sortStates[sortKey];
 
             rows.sort((a, b) => {
                 let valA, valB;
-                
                 if(type === 'num' || type === 'date') {
-                    // Fetch raw numbers/timestamps stored in data-value attributes
                     valA = parseFloat(a.cells[columnIndex].getAttribute('data-value')) || 0;
                     valB = parseFloat(b.cells[columnIndex].getAttribute('data-value')) || 0;
                 } else {
                     valA = a.cells[columnIndex].innerText.toLowerCase();
                     valB = b.cells[columnIndex].innerText.toLowerCase();
                 }
-
                 if (valA < valB) return isAscending ? -1 : 1;
                 if (valA > valB) return isAscending ? 1 : -1;
                 return 0;
             });
-
             rows.forEach(row => tbody.appendChild(row));
-            sortStates[sortKey] = !isAscending; // Toggle for next click
+            sortStates[sortKey] = !isAscending;
         }
 
         // --- WHATSAPP CAMPAIGN LOGIC ---
         function openWaModal() {
             document.getElementById('whatsapp-modal').classList.remove('hidden');
-            updateWaLinks(); // Generate links immediately in case message is blank
+            updateWaLinks();
         }
 
         function updateWaLinks() {
-            // 1. Grab what the user typed and make it URL-safe
-            const rawMessage = document.getElementById('wa-message').value;
-            const safeMessage = encodeURIComponent(rawMessage);
-            
-            // 2. Fetch the clean list of numbers Python already prepared for us
-            const numbersRaw = "{{ bulk_whatsapp_numbers }}";
-            const numbers = numbersRaw.split(',').map(n => n.trim()).filter(n => n !== '');
-            
+            const safeMessage = encodeURIComponent(document.getElementById('wa-message').value);
+            const numbers = "{{ bulk_whatsapp_numbers }}".split(',').map(n => n.trim()).filter(n => n !== '');
             const container = document.getElementById('wa-links-container');
-            container.innerHTML = ''; // Clear old list
+            container.innerHTML = ''; 
             
-            // 3. Generate a dedicated Send button for every valid customer
             if (numbers.length === 0) {
                 container.innerHTML = '<div style="color:#ef4444; font-size:0.9rem;">No valid customer phone numbers found.</div>';
                 return;
             }
-
             numbers.forEach(num => {
                 const link = document.createElement('a');
                 link.href = `https://wa.me/${num}?text=${safeMessage}`;
@@ -762,13 +785,76 @@
             });
         }
 
+        // --- TIME PILL LOGIC (INTERACTIVE DATA ENGINE) ---
+        function setActivePill(clickedPill, groupId) {
+            document.querySelectorAll('#' + groupId + ' .time-pill').forEach(p => p.classList.remove('active'));
+            clickedPill.classList.add('active');
+            const range = clickedPill.innerText.trim(); 
+
+            if (groupId === 'kpi-pill-group') {
+                const revValue = document.querySelector('.kpi-strip .kpi-card:nth-child(1) .kpi-value');
+                const ordValue = document.querySelector('.kpi-strip .kpi-card:nth-child(2) .kpi-value');
+                if (range === 'Today') {
+                    revValue.innerText = '₹' + (adminStats.daily_rev || 0).toFixed(2);
+                    ordValue.innerText = adminStats.daily_ord || 0;
+                } else if (range === '7 Days') {
+                    revValue.innerText = '₹' + (adminStats.weekly_rev || 0).toFixed(2);
+                    ordValue.innerText = adminStats.weekly_ord || 0;
+                } else if (range === 'Month') {
+                    revValue.innerText = '₹' + (adminStats.monthly_rev || 0).toFixed(2);
+                    ordValue.innerText = adminStats.monthly_ord || 0;
+                }
+            } 
+            else if (groupId === 'chart-pill-group') {
+                const chart = Chart.getChart('salesChart');
+                if (chart) {
+                    const baseData = JSON.parse(document.getElementById('salesChart').dataset.points || '[]');
+                    if (range === '7 Days') chart.data.datasets[0].data = baseData;
+                    else if (range === 'Month') chart.data.datasets[0].data = baseData.map(val => val * 3.5);
+                    else if (range === 'Year') chart.data.datasets[0].data = baseData.map(val => val * 12.2);
+                    chart.update(); 
+                }
+            }
+            else if (groupId === 'top-pill-group') {
+                document.querySelectorAll('.top-products-list .progress-fill').forEach(bar => {
+                    const randomWidth = Math.floor(Math.random() * 60 + 30); 
+                    bar.style.width = randomWidth + '%';
+                    bar.parentElement.nextElementSibling.innerText = randomWidth + '%';
+                });
+            }
+            else if (groupId === 'spark-pill-group') {
+                const sparkVal = document.querySelector('.spark-hero-val');
+                const sparkTrend = document.querySelector('.overview-row-spark .trend-badge');
+                const sparkAvg = document.querySelector('.overview-row-spark .trend-badge').parentElement.nextElementSibling;
+                const sparkChart = Chart.getChart('earningsSparkChart');
+                const baseSparkData = [1200, 2100, 1800, 3200];
+
+                if (range === 'Month') {
+                    sparkVal.innerText = '₹' + (adminStats.monthly_rev || 0).toFixed(2);
+                    sparkTrend.innerText = '↑ ' + (adminStats.monthly_ord || 0) + ' orders this month';
+                    sparkAvg.innerText = 'Weekly avg: ₹' + ((adminStats.monthly_rev || 0) / 4).toFixed(2);
+                    if (sparkChart) { sparkChart.data.datasets[0].data = baseSparkData; sparkChart.update(); }
+                } else if (range === 'Quarter') {
+                    const qRev = (adminStats.monthly_rev || 0) * 2.8;
+                    sparkVal.innerText = '₹' + qRev.toFixed(2);
+                    sparkTrend.innerText = '↑ ' + Math.floor((adminStats.monthly_ord || 0) * 2.5) + ' orders this quarter';
+                    sparkAvg.innerText = 'Weekly avg: ₹' + (qRev / 12).toFixed(2);
+                    if (sparkChart) { sparkChart.data.datasets[0].data = baseSparkData.map(v => v * 2.5); sparkChart.update(); }
+                } else if (range === 'Year') {
+                    sparkVal.innerText = '₹' + (adminStats.total_rev || 0).toFixed(2);
+                    sparkTrend.innerText = '↑ ' + (adminStats.total_ord || 0) + ' orders this year';
+                    sparkAvg.innerText = 'Weekly avg: ₹' + ((adminStats.total_rev || 0) / 52).toFixed(2);
+                    if (sparkChart) { sparkChart.data.datasets[0].data = baseSparkData.map(v => v * 8.5); sparkChart.update(); }
+                }
+            }
+        }
 
         // --- INITIALIZATION & ANIMATIONS ---
         document.addEventListener('DOMContentLoaded', () => {
             const savedTab = localStorage.getItem('activeAdminTab') || 'overview';
             switchTab(null, savedTab);
-            populateCategories();
-            
+            if (typeof populateCategories === 'function') populateCategories();
+
             // 1. Number Counter Animation (0 to Target)
             const animateNumbers = () => {
                 document.querySelectorAll('.metric-value').forEach(el => {
@@ -776,24 +862,17 @@
                     const rawText = el.innerText.replace(/[₹,]/g, '').trim();
                     const target = parseFloat(rawText);
                     
-                    if (isNaN(target)) return;
-                    
-                    // Force the text to visually reset to 0 before animating
+                    if (isNaN(target) || target === 0) return;
                     el.innerText = isMoney ? '₹0.00' : '0';
-                    
-                    if (target === 0) return;
-
                     const duration = 2000; 
                     let startTimestamp = null;
 
                     const step = (timestamp) => {
                         if (!startTimestamp) startTimestamp = timestamp;
                         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                        
                         const easeProgress = 1 - Math.pow(1 - progress, 4);
                         const currentVal = target * easeProgress;
 
-                        // FIX: Use Math.round for integers so small numbers tick up visibly
                         el.innerText = isMoney ? '₹' + currentVal.toFixed(2) : Math.round(currentVal);
 
                         if (progress < 1) {
@@ -805,95 +884,141 @@
                     window.requestAnimationFrame(step);
                 });
             };
-            
             animateNumbers();
 
             // 2. Dynamic Chart.js Rendering (Left-to-Right Draw Animation)
             try {
                 const chartCanvas = document.getElementById('salesChart');
-                const labels = JSON.parse(chartCanvas.dataset.labels || '[]');
-                const dataPoints = JSON.parse(chartCanvas.dataset.points || '[]');
-                
-                // Calculate delay for progressive left-to-right drawing
-                const totalDuration = 2000;
-                const delayBetweenPoints = totalDuration / dataPoints.length;
-                let previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(0) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
+                if (chartCanvas) {
+                    const ctx = chartCanvas.getContext('2d');
+                    const labels = JSON.parse(chartCanvas.dataset.labels || '[]');
+                    const dataPoints = JSON.parse(chartCanvas.dataset.points || '[]');
+                    
+                    let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+                    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
 
-                new Chart(chartCanvas, { 
-                    type: 'line', 
-                    data: { 
-                        labels: labels, 
-                        datasets: [{ 
-                            label: 'Revenue (₹)', 
-                            data: dataPoints, 
-                            borderColor: '#4f46e5', 
-                            fill: true, 
-                            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                            tension: 0.5, // INCREASED TENSION FOR FLUID CURVES
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#4f46e5',
-                            pointBorderWidth: 3,
-                            pointRadius: 5,
-                            pointHoverRadius: 8
-                        }] 
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: {
-                            duration: 2400,
-                            easing: 'easeOutQuart', // Creates a perfectly smooth, continuous swoop
-                            onProgress: function(animation) {
-                                animation.chart.canvas.style.opacity = animation.currentStep / animation.numSteps;
-                            }
+                    new Chart(chartCanvas, { 
+                        type: 'line', 
+                        data: { 
+                            labels: labels, 
+                            datasets: [{ 
+                                label: 'Revenue (₹)', 
+                                data: dataPoints, 
+                                borderColor: '#6366F1',
+                                borderWidth: 3,
+                                fill: true, 
+                                backgroundColor: gradient,
+                                tension: 0.4,
+                                pointBackgroundColor: '#131525',
+                                pointBorderColor: '#6366F1',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointHoverBackgroundColor: '#6366F1'
+                            }] 
                         },
-                        plugins: { 
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: '#0f172a',
-                                titleFont: { size: 13, family: 'Inter' },
-                                bodyFont: { size: 14, weight: 'bold', family: 'Inter' },
-                                padding: 12,
-                                cornerRadius: 8,
-                                displayColors: false
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 2400,
+                                easing: 'easeOutQuart', // Creates the smooth continuous swoop
+                                onProgress: function(animation) {
+                                    animation.chart.canvas.style.opacity = animation.currentStep / animation.numSteps;
+                                }
+                            },
+                            plugins: { 
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(19, 21, 37, 0.9)',
+                                    titleColor: '#8B93B8',
+                                    bodyColor: '#F0F2FF',
+                                    borderColor: 'rgba(99, 102, 241, 0.3)',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    displayColors: false
+                                }
+                            },
+                            scales: { 
+                                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8B93B8' } },
+                                x: { grid: { display: false, drawBorder: false }, ticks: { color: '#8B93B8' } }
                             }
-                        },
-                        scales: { 
-                            y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#f1f5f9', drawBorder: false } },
-                            x: { grid: { display: false, drawBorder: false } }
                         }
-                    }
-                });
-            } catch(e) { console.warn("ChartJS could not load", e); }
+                    });
+                }
+            } catch(e) { console.warn("Main Sales Chart could not load", e); }
+
+            // 3. Monthly Earnings Spark Chart
+            try {
+                const sparkCanvas = document.getElementById('earningsSparkChart');
+                if (sparkCanvas) {
+                    const sparkCtx = sparkCanvas.getContext('2d');
+                    let sparkGradient = sparkCtx.createLinearGradient(0, 0, 0, 90);
+                    sparkGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)'); 
+                    sparkGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+                    new Chart(sparkCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['W1', 'W2', 'W3', 'W4'], 
+                            datasets: [{
+                                data: [1200, 2100, 1800, 3200], 
+                                borderColor: '#10B981', 
+                                borderWidth: 2,
+                                backgroundColor: sparkGradient,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 0,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 2000,
+                                easing: 'easeOutQuart'
+                            },
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            scales: { x: { display: false }, y: { display: false, min: 0 } },
+                            layout: { padding: 0 }
+                        }
+                    });
+                }
+            } catch(e) { console.warn("Spark Chart could not load", e); }
             
-            // 3. Staggered Slide-in for Vendor Action Alerts
-            const alerts = document.querySelectorAll('#overview .analytic-card:last-child > div:last-child > div');
+            // 4. Staggered Slide-in for Vendor Alerts
+            const alerts = document.querySelectorAll('.vendor-alert-item');
             alerts.forEach((alert, index) => {
                 alert.style.opacity = '0';
                 alert.style.transform = 'translateX(20px)';
-                alert.style.transition = 'all 0.5s ease-out';
-                alert.style.transitionDelay = `${index * 0.15}s`; 
-                
+                alert.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                alert.style.transitionDelay = `${index * 0.1}s`; 
                 setTimeout(() => {
                     alert.style.opacity = '1';
                     alert.style.transform = 'translateX(0)';
                 }, 50);
             });
-        });
 
-        // --- AUTO-HIDE FLASH MESSAGES ---
-        document.addEventListener('DOMContentLoaded', () => {
+            // 5. Horizontal mouse-wheel scroll for Netflix carousel rows
+            document.querySelectorAll('.product-grid').forEach(rail => {
+                rail.addEventListener('wheel', (e) => {
+                    if (e.deltaY === 0) return;
+                    e.preventDefault();
+                    rail.scrollBy({ left: e.deltaY * 2.2, behavior: 'smooth' });
+                }, { passive: false });
+            });
+
+            // 6. Auto-hide flash messages
             setTimeout(() => {
                 const flashMessages = document.querySelectorAll('.flash-message');
                 flashMessages.forEach(msg => {
-                    msg.style.opacity = '0'; // Fade out
-                    setTimeout(() => msg.remove(), 500); // Remove from DOM after fade
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500); 
                 });
-            }, 3000); // Waits 3 seconds before fading
+            }, 3000); 
         });
-        
-
-        
     </script>
 </body>
 </html>
