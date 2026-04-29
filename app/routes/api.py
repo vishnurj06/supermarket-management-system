@@ -80,16 +80,24 @@ def get_order(exit_code):
     conn = DB.get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM orders WHERE exit_code=%s", (exit_code,))
+            # --- FIXED SQL QUERY: Now joins the users table to grab the username ---
+            cursor.execute("""
+                SELECT orders.*, users.username 
+                FROM orders 
+                LEFT JOIN users ON orders.user_id = users.id 
+                WHERE orders.exit_code = %s
+            """, (exit_code,))
+            
             order_data = cursor.fetchone()
             
             if not order_data:
                 return jsonify({'error': 'Order not found'}), 404
 
-            # FIX: Convert datetime to string so JSON doesn't crash!
+            # Convert datetime to string so JSON doesn't crash
             if 'date' in order_data and order_data['date']:
                 order_data['date'] = str(order_data['date'])
 
+            # Fetch the items associated with the order
             cursor.execute('''
                 SELECT p.name, oi.quantity as qty, p.weight_g 
                 FROM order_items oi
