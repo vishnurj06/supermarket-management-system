@@ -60,6 +60,14 @@ def update_profile():
     data = request.json
     user_id = session['user_id']
     password = data.get('password') 
+    new_username = data.get('username', '').strip()
+
+    # --- NEW: Check for duplicate username ---
+    if new_username:
+        existing_user = User.get_by_username(new_username)
+        # If a user exists with this name AND it's not the current user's ID
+        if existing_user and existing_user['id'] != session['user_id']:
+            return jsonify({"success": False, "message": "This username already exists. Try a different one."})
     
     conn = DB.get_connection()
     try:

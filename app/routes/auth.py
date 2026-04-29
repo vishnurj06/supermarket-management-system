@@ -64,6 +64,11 @@ def register():
         email = request.form.get('email')
         mobile = request.form.get('mobile')
         
+        # --- NEW: Enforce mandatory fields ---
+        if not email or not mobile:
+            flash('Email and Mobile number are strictly required.', 'error')
+            return redirect(url_for('auth.login'))
+        
         existing_user = User.get_by_username(username)
         if existing_user:
             flash('Username already exists. Please choose a different one.', 'error')
@@ -92,4 +97,4 @@ def register():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.login'))

@@ -550,6 +550,7 @@ async function saveProfile(event) {
 
     // --- (Your fetch payload logic remains the same) ---
     const payload = {
+        username: document.getElementById('prof-username').value,
         full_name: document.getElementById('prof-name').value,
         dob: document.getElementById('prof-dob').value,
         email: document.getElementById('prof-email').value,

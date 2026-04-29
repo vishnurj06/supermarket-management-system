@@ -2803,7 +2803,7 @@ body.no-scroll {
         grid-column: unset !important;
         grid-row: unset !important;
         width: 100% !important;
-        max-height: 90dvh !important;   /* never taller than 90% viewport */
+        max-height: 55dvh !important;   /* never taller than 90% viewport */
 
         /* Slide-up sheet positioning */
         position: fixed !important;
@@ -2889,7 +2889,7 @@ body.no-scroll {
         overflow-y: auto !important;
         overscroll-behavior: contain !important;
         -webkit-overflow-scrolling: touch !important;
-        max-height: 45dvh !important;
+        max-height: 30dvh !important;
         padding: 0 1rem !important;
     }
 
